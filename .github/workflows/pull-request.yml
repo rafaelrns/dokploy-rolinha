@@ -1,0 +1,67 @@
+name: Pull Request
+
+on:
+  pull_request:
+    branches: [main, canary]
+
+permissions:
+  contents: read
+
+jobs:
+  pr-check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        job: [build, test, typecheck, security-audit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.4.0
+          cache: "pnpm"
+      
+      - name: Install Nixpacks
+        if: matrix.job == 'test'
+        run:  |
+          export NIXPACKS_VERSION=1.41.0
+          curl -fsSLo /tmp/nixpacks-install.sh https://nixpacks.com/install.sh
+          if [ -n "${{ secrets.NIXPACKS_INSTALLER_SHA256 }}" ]; then
+            echo "${{ secrets.NIXPACKS_INSTALLER_SHA256 }}  /tmp/nixpacks-install.sh" | sha256sum -c -
+          fi
+          chmod +x /tmp/nixpacks-install.sh
+          /tmp/nixpacks-install.sh
+          echo "Nixpacks installed $NIXPACKS_VERSION"
+
+      - name: Install Railpack
+        if: matrix.job == 'test'
+        run:  |
+          export RAILPACK_VERSION=0.15.4
+          curl -fsSLo /tmp/railpack-install.sh https://railpack.com/install.sh
+          if [ -n "${{ secrets.RAILPACK_INSTALLER_SHA256 }}" ]; then
+            echo "${{ secrets.RAILPACK_INSTALLER_SHA256 }}  /tmp/railpack-install.sh" | sha256sum -c -
+          fi
+          chmod +x /tmp/railpack-install.sh
+          /tmp/railpack-install.sh
+          echo "Railpack installed $RAILPACK_VERSION"
+      
+      - name: Add build tools to PATH
+        if: matrix.job == 'test'
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+      
+      - name: Initialize Docker Swarm
+        if: matrix.job == 'test'
+        run: |
+          docker swarm init
+          docker network create --driver overlay dokploy-network || true
+          echo "✅ Docker Swarm initialized"
+      
+      - run: pnpm install --frozen-lockfile
+      - name: Build server package
+        if: matrix.job != 'security-audit'
+        run: pnpm server:build
+      - name: Enforce dependency audit policy
+        if: matrix.job == 'security-audit'
+        run: pnpm security:audit:policy
+      - run: pnpm ${{ matrix.job }}
+        if: matrix.job != 'security-audit'

@@ -1,0 +1,8 @@
+{
+	"generatedAt": "2026-04-21",
+	"allowed": {
+		"critical": 0,
+		"high": 0
+	},
+	"notes": "CI blocks pull requests if high/critical counts increase above this baseline."
+}
