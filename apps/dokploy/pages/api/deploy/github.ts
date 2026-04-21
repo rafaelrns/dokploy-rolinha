@@ -22,7 +22,7 @@ import { extractCommitMessage, extractHash } from "./[refreshToken]";
 
 export const config = {
 	api: {
-		sizeLimit: process.env.DEPLOY_WEBHOOK_BODY_SIZE_LIMIT || "2mb",
+		sizeLimit: "2mb",
 	},
 };
 

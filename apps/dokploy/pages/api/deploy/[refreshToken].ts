@@ -824,6 +824,6 @@ export const extractCommittedPaths = async (
 export const config = {
 	api: {
 		bodyParser: false,
-		sizeLimit: process.env.DEPLOY_WEBHOOK_BODY_SIZE_LIMIT || "2mb",
+		sizeLimit: "2mb",
 	},
 };

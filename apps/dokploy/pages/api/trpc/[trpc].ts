@@ -57,6 +57,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 export const config = {
 	api: {
 		bodyParser: false,
-		sizeLimit: process.env.TRPC_BODY_SIZE_LIMIT || "25mb",
+		sizeLimit: "25mb",
 	},
 };
