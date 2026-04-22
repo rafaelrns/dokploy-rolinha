@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { getAvatarType, isSolidColorAvatar } from "@/lib/avatar-utils";
+import { SUPPORTED_LOCALES, useI18n } from "@/lib/i18n";
 import { generateSHA256Hash, getFallbackAvatarInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { Configure2FA } from "./configure-2fa";
@@ -43,6 +44,7 @@ const profileSchema = z.object({
 	firstName: z.string().optional(),
 	lastName: z.string().optional(),
 	allowImpersonation: z.boolean().optional().default(false),
+	locale: z.enum(SUPPORTED_LOCALES).optional(),
 });
 
 type Profile = z.infer<typeof profileSchema>;
@@ -63,6 +65,7 @@ const randomImages = [
 ];
 
 export const ProfileForm = () => {
+	const { t, locale, setLocale } = useI18n();
 	const { data, refetch, isPending } = api.user.get.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 
@@ -91,6 +94,7 @@ export const ProfileForm = () => {
 			allowImpersonation: data?.user?.allowImpersonation || false,
 			firstName: data?.user?.firstName || "",
 			lastName: data?.user?.lastName || "",
+			locale: (data?.user?.locale as "pt-BR" | "en" | undefined) ?? locale,
 		},
 		resolver: zodResolver(profileSchema),
 	});
@@ -106,6 +110,8 @@ export const ProfileForm = () => {
 					allowImpersonation: data?.user?.allowImpersonation,
 					firstName: data?.user?.firstName || "",
 					lastName: data?.user?.lastName || "",
+					locale:
+						(data?.user?.locale as "pt-BR" | "en" | undefined) ?? locale,
 				},
 				{
 					keepValues: true,
@@ -131,9 +137,13 @@ export const ProfileForm = () => {
 				allowImpersonation: values.allowImpersonation,
 				firstName: values.firstName || undefined,
 				lastName: values.lastName || undefined,
+				locale: values.locale,
 			});
 			await refetch();
-			toast.success("Profile Updated");
+			if (values.locale) {
+				setLocale(values.locale);
+			}
+			toast.success(t("profile.updated"));
 			form.reset({
 				email: values.email,
 				password: "",
@@ -143,7 +153,7 @@ export const ProfileForm = () => {
 				lastName: values.lastName || "",
 			});
 		} catch (error) {
-			toast.error("Error updating the profile");
+			toast.error(t("profile.updateError"));
 		}
 	};
 
@@ -155,10 +165,10 @@ export const ProfileForm = () => {
 						<div>
 							<CardTitle className="text-xl flex flex-row gap-2">
 								<User className="size-6 text-muted-foreground self-center" />
-								Account
+								{t("profile.title")}
 							</CardTitle>
 							<CardDescription>
-								Change the details of your profile here.
+								{t("profile.description")}
 							</CardDescription>
 						</div>
 
@@ -169,7 +179,7 @@ export const ProfileForm = () => {
 						{isError && <AlertBlock type="error">{error?.message}</AlertBlock>}
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[35vh]">
-								<span>Loading...</span>
+								<span>{t("common.loading")}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -185,7 +195,7 @@ export const ProfileForm = () => {
 												name="firstName"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>First Name</FormLabel>
+														<FormLabel>{t("profile.firstName")}</FormLabel>
 														<FormControl>
 															<Input placeholder="John" {...field} />
 														</FormControl>
@@ -198,7 +208,7 @@ export const ProfileForm = () => {
 												name="lastName"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Last Name</FormLabel>
+														<FormLabel>{t("profile.lastName")}</FormLabel>
 														<FormControl>
 															<Input placeholder="Doe" {...field} />
 														</FormControl>
@@ -211,7 +221,7 @@ export const ProfileForm = () => {
 												name="email"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Email</FormLabel>
+														<FormLabel>{t("profile.email")}</FormLabel>
 														<FormControl>
 															<Input placeholder="Email" {...field} />
 														</FormControl>
@@ -224,7 +234,7 @@ export const ProfileForm = () => {
 												name="currentPassword"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Current Password</FormLabel>
+														<FormLabel>{t("profile.currentPassword")}</FormLabel>
 														<FormControl>
 															<Input
 																type="password"
@@ -242,7 +252,7 @@ export const ProfileForm = () => {
 												name="password"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Password</FormLabel>
+														<FormLabel>{t("profile.newPassword")}</FormLabel>
 														<FormControl>
 															<Input
 																type="password"
@@ -261,7 +271,7 @@ export const ProfileForm = () => {
 												name="image"
 												render={({ field }) => (
 													<FormItem>
-														<FormLabel>Avatar</FormLabel>
+														<FormLabel>{t("profile.avatar")}</FormLabel>
 														<FormControl>
 															<RadioGroup
 																onValueChange={(e) => {
@@ -422,13 +432,9 @@ export const ProfileForm = () => {
 													render={({ field }) => (
 														<FormItem className="flex flex-row items-center justify-between p-3 mt-4 border rounded-lg shadow-sm">
 															<div className="space-y-0.5">
-																<FormLabel>Allow Impersonation</FormLabel>
+																<FormLabel>{t("profile.allowImpersonation")}</FormLabel>
 																<FormDescription>
-																	Enable this option to allow Dokploy Cloud
-																	administrators to temporarily access your
-																	account for troubleshooting and support
-																	purposes. This helps them quickly identify and
-																	resolve any issues you may encounter.
+																	{t("profile.allowImpersonationDescription")}
 																</FormDescription>
 															</div>
 															<FormControl>
@@ -441,11 +447,31 @@ export const ProfileForm = () => {
 													)}
 												/>
 											)}
+											<FormField
+												control={form.control}
+												name="locale"
+												render={({ field }) => (
+													<FormItem>
+														<FormLabel>{t("common.language")}</FormLabel>
+														<FormControl>
+															<select
+																className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+																value={field.value || locale}
+																onChange={(event) => field.onChange(event.target.value)}
+															>
+																<option value="pt-BR">{t("locale.pt-BR")}</option>
+																<option value="en">{t("locale.en")}</option>
+															</select>
+														</FormControl>
+														<FormMessage />
+													</FormItem>
+												)}
+											/>
 										</div>
 
 										<div className="flex items-center justify-end gap-2">
 											<Button type="submit" isLoading={isUpdating}>
-												Save
+												{t("common.save")}
 											</Button>
 										</div>
 									</form>

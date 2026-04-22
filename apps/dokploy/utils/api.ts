@@ -9,6 +9,12 @@ import { createTRPCNext } from "@trpc/next";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 import superjson from "superjson";
 import type { AppRouter } from "@/server/api/root";
+import {
+	DEFAULT_LOCALE,
+	LOCALE_COOKIE_NAME,
+	type AppLocale,
+	isSupportedLocale,
+} from "@/lib/i18n";
 
 const getBaseUrl = () => {
 	if (typeof window !== "undefined") return "";
@@ -22,6 +28,20 @@ const getWsUrl = () => {
 	const host = window.location.host;
 
 	return `${protocol}${host}/drawer-logs`;
+};
+
+const getClientLocale = (): AppLocale => {
+	if (typeof window === "undefined") {
+		return DEFAULT_LOCALE;
+	}
+	const cookieLocale = document.cookie
+		.split("; ")
+		.find((row) => row.startsWith(`${LOCALE_COOKIE_NAME}=`))
+		?.split("=")[1];
+	if (isSupportedLocale(cookieLocale)) {
+		return cookieLocale;
+	}
+	return DEFAULT_LOCALE;
 };
 
 let wsClientSingleton: ReturnType<typeof createWSClient> | null = null;
@@ -56,10 +76,20 @@ const links =
 						true: httpLink({
 							url: `${getBaseUrl()}/api/trpc`,
 							transformer: superjson,
+							headers() {
+								return {
+									"x-dokploy-locale": getClientLocale(),
+								};
+							},
 						}),
 						false: httpBatchLink({
 							url: `${getBaseUrl()}/api/trpc`,
 							transformer: superjson,
+							headers() {
+								return {
+									"x-dokploy-locale": getClientLocale(),
+								};
+							},
 						}),
 					}),
 				}),
@@ -68,6 +98,11 @@ const links =
 				httpBatchLink({
 					url: `${getBaseUrl()}/api/trpc`,
 					transformer: superjson,
+					headers() {
+						return {
+							"x-dokploy-locale": DEFAULT_LOCALE,
+						};
+					},
 				}),
 			];
 

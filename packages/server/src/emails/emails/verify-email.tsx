@@ -16,17 +16,40 @@ import {
 export type TemplateProps = {
 	userName: string;
 	verificationUrl: string;
+	locale?: "pt-BR" | "en";
 };
 
 export const VerifyEmailTemplate = ({
 	userName = "User",
 	verificationUrl = "https://app.dokploy.com/verify",
+	locale = "pt-BR",
 }: TemplateProps) => {
-	const previewText = "Verify your email address to get started with Dokploy";
+	const messages =
+		locale === "en"
+			? {
+					preview: "Verify your email address to get started with Dokploy",
+					title: "Verify your email",
+					greeting: `Hello ${userName}, thank you for signing up for Dokploy. Please verify your email address to activate your account.`,
+					button: "Verify email address",
+					fallback:
+						"If the button above doesn't work, copy and paste the following link into your browser:",
+					footer:
+						"This is an automated email from Dokploy. If you didn't create an account, you can safely ignore this email.",
+				}
+			: {
+					preview: "Verifique seu e-mail para começar a usar o Dokploy",
+					title: "Verifique seu e-mail",
+					greeting: `Olá ${userName}, obrigado por se cadastrar no Dokploy. Verifique seu e-mail para ativar sua conta.`,
+					button: "Verificar e-mail",
+					fallback:
+						"Se o botão acima não funcionar, copie e cole o link abaixo no seu navegador:",
+					footer:
+						"Este é um e-mail automático do Dokploy. Se você não criou uma conta, pode ignorar esta mensagem com segurança.",
+				};
 	return (
 		<Html>
 			<Head />
-			<Preview>{previewText}</Preview>
+			<Preview>{messages.preview}</Preview>
 			<Tailwind
 				config={{
 					theme: {
@@ -54,11 +77,10 @@ export const VerifyEmailTemplate = ({
 						{/* Body */}
 						<Section className="bg-white px-[40px] py-[32px]">
 							<Heading className="text-[#09090b] text-[22px] font-semibold m-0 mb-[8px]">
-								Verify Your Email
+								{messages.title}
 							</Heading>
 							<Text className="text-[#71717a] text-[14px] leading-[22px] m-0 mb-[24px]">
-								Hello {userName}, thank you for signing up for Dokploy. Please
-								verify your email address to activate your account.
+								{messages.greeting}
 							</Text>
 
 							{/* CTA Button */}
@@ -67,13 +89,12 @@ export const VerifyEmailTemplate = ({
 									href={verificationUrl}
 									className="bg-[#09090b] rounded-lg text-white text-[14px] font-semibold no-underline text-center px-[24px] py-[12px]"
 								>
-									Verify Email Address
+									{messages.button}
 								</Button>
 							</Section>
 
 							<Text className="text-[#a1a1aa] text-[13px] leading-[20px] m-0 text-center mb-[16px]">
-								If the button above doesn't work, copy and paste the following
-								link into your browser:
+								{messages.fallback}
 							</Text>
 							<Text className="text-[#71717a] text-[12px] leading-[18px] m-0 text-center break-all">
 								{verificationUrl}
@@ -83,15 +104,13 @@ export const VerifyEmailTemplate = ({
 						{/* Footer */}
 						<Section className="bg-[#fafafa] rounded-b-xl px-[40px] py-[24px] text-center border-t border-solid border-[#e4e4e7]">
 							<Text className="text-[#a1a1aa] text-[12px] leading-[18px] m-0">
-								This is an automated email from{" "}
+								{messages.footer}{" "}
 								<Link
 									href="https://dokploy.com"
 									className="text-[#71717a] underline"
 								>
-									Dokploy Cloud
+									Dokploy
 								</Link>
-								. If you didn't create an account, you can safely ignore this
-								email.
 							</Text>
 						</Section>
 					</Container>

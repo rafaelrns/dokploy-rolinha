@@ -16,6 +16,7 @@ import {
 	createTRPCRouter,
 	protectedProcedure,
 } from "@/server/api/trpc";
+import { getApiI18nMessage } from "@/server/api/utils/api-i18n";
 
 const usingLocalLicenseProvider =
 	(process.env.ENTERPRISE_LICENSE_PROVIDER || "local") === "local";
@@ -32,7 +33,7 @@ export const licenseKeyRouter = createTRPCRouter({
 				if (!currentUser) {
 					throw new TRPCError({
 						code: "NOT_FOUND",
-						message: "User not found",
+						message: getApiI18nMessage(ctx.locale ?? "pt-BR", "userNotFound"),
 					});
 				}
 
@@ -76,7 +77,7 @@ export const licenseKeyRouter = createTRPCRouter({
 					message:
 						error instanceof Error
 							? error.message
-							: "Failed to activate license key",
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 					cause: error,
 				});
 			}
@@ -90,7 +91,7 @@ export const licenseKeyRouter = createTRPCRouter({
 			if (!currentUser) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
-					message: "User not found",
+					message: getApiI18nMessage(ctx.locale ?? "pt-BR", "userNotFound"),
 				});
 			}
 
@@ -143,7 +144,7 @@ export const licenseKeyRouter = createTRPCRouter({
 				message:
 					error instanceof Error
 						? error.message
-						: "Failed to validate license key",
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 			});
 		}
 	}),
@@ -156,7 +157,7 @@ export const licenseKeyRouter = createTRPCRouter({
 			if (!currentUser) {
 				throw new TRPCError({
 					code: "NOT_FOUND",
-					message: "User not found",
+					message: getApiI18nMessage(ctx.locale ?? "pt-BR", "userNotFound"),
 				});
 			}
 			if (!currentUser.licenseKey) {
@@ -200,7 +201,7 @@ export const licenseKeyRouter = createTRPCRouter({
 				message:
 					error instanceof Error
 						? error.message
-						: "Failed to deactivate license key",
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 			});
 		}
 	}),
@@ -213,7 +214,7 @@ export const licenseKeyRouter = createTRPCRouter({
 		if (!currentUser) {
 			throw new TRPCError({
 				code: "NOT_FOUND",
-				message: "User not found",
+				message: getApiI18nMessage(ctx.locale ?? "pt-BR", "userNotFound"),
 			});
 		}
 
@@ -278,7 +279,7 @@ export const licenseKeyRouter = createTRPCRouter({
 					message:
 						error instanceof Error
 							? error.message
-							: "Failed to generate local license key",
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 				});
 			}
 		}),
@@ -323,7 +324,7 @@ export const licenseKeyRouter = createTRPCRouter({
 					message:
 						error instanceof Error
 							? error.message
-							: "Failed to update enterprise settings",
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 				});
 			}
 		}),

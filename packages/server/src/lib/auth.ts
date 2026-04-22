@@ -127,6 +127,7 @@ const { handler, api } = betterAuth({
 					userName: user.name || "User",
 					email: user.email,
 					verificationUrl: url,
+					locale: (user as any).locale,
 				});
 			}
 		},
@@ -144,11 +145,19 @@ const { handler, api } = betterAuth({
 			},
 		},
 		sendResetPassword: async ({ user, url }) => {
+			const userLocale = (user as any).locale === "en" ? "en" : "pt-BR";
 			await sendEmail({
 				email: user.email,
-				subject: "Reset your password",
+				subject:
+					userLocale === "en" ? "Reset your password" : "Redefina sua senha",
 				text: `
-				<p>Click the link to reset your password: <a href="${url}">Reset Password</a></p>
+				<p>${
+					userLocale === "en"
+						? "Click the link to reset your password"
+						: "Clique no link para redefinir sua senha"
+				}: <a href="${url}">${
+					userLocale === "en" ? "Reset Password" : "Redefinir senha"
+				}</a></p>
 				`,
 			});
 		},

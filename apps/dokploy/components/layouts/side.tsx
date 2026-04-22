@@ -82,6 +82,7 @@ import {
 	useSidebar,
 } from "@/components/ui/sidebar";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
 import type { AppRouter } from "@/server/api/root";
 import { api } from "@/utils/api";
@@ -435,6 +436,43 @@ const MENU: Menu = {
 	],
 } as const;
 
+const NAV_TRANSLATION_KEYS: Record<string, string> = {
+	Home: "nav.home",
+	Projects: "nav.projects",
+	Deployments: "nav.deployments",
+	Monitoring: "nav.monitoring",
+	Schedules: "nav.schedules",
+	"Traefik File System": "nav.traefikFileSystem",
+	Docker: "common.docker",
+	Swarm: "nav.cluster",
+	Requests: "nav.requests",
+	"Web Server": "nav.webServer",
+	Profile: "common.profile",
+	"Remote Servers": "nav.remoteServers",
+	Users: "nav.users",
+	"Audit Logs": "nav.auditLogs",
+	"SSH Keys": "nav.sshKeys",
+	AI: "nav.ai",
+	Tags: "nav.tags",
+	Git: "nav.git",
+	Registry: "nav.registry",
+	"S3 Destinations": "nav.s3Destinations",
+	Certificates: "nav.certificates",
+	Cluster: "nav.cluster",
+	Notifications: "nav.notifications",
+	Billing: "common.billing",
+	License: "nav.license",
+	SSO: "nav.sso",
+	Whitelabeling: "nav.whitelabeling",
+	Documentation: "nav.documentation",
+	Support: "nav.support",
+};
+
+const translateMenuLabel = (label: string, t: (key: string) => string) => {
+	const key = NAV_TRANSLATION_KEYS[label];
+	return key ? t(key) : label;
+};
+
 /**
  * Creates a menu based on the current user's role and permissions
  * @returns a menu object with the home, settings, and help items
@@ -546,6 +584,7 @@ function LogoWrapper() {
 }
 
 function SidebarLogo() {
+	const { t } = useI18n();
 	const { state } = useSidebar();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 	const { data: user } = api.user.get.useQuery();
@@ -628,7 +667,7 @@ function SidebarLogo() {
 											)}
 										>
 											<p className="text-sm font-medium leading-none">
-												{activeOrganization?.name ?? "Select Organization"}
+												{activeOrganization?.name ?? t("nav.organizations")}
 											</p>
 										</div>
 									</div>
@@ -644,7 +683,7 @@ function SidebarLogo() {
 								sideOffset={4}
 							>
 								<DropdownMenuLabel className="text-xs text-muted-foreground shrink-0">
-									Organizations
+									{t("nav.organizations")}
 								</DropdownMenuLabel>
 								<div className="overflow-y-auto overflow-x-hidden min-h-0 -mx-1 px-1">
 									{organizations?.map((org) => {
@@ -699,19 +738,19 @@ function SidebarLogo() {
 															})
 																.then(() => {
 																	refetch();
-																	toast.success("Default organization updated");
+																	toast.success(t("org.defaultUpdated"));
 																})
 																.catch((error) => {
 																	toast.error(
 																		error?.message ||
-																			"Error setting default organization",
+																			t("org.defaultUpdateError"),
 																	);
 																});
 														}}
 														title={
 															isDefault
-																? "Default organization"
-																: "Set as default"
+																? t("org.defaultBadge")
+																: t("org.setAsDefault")
 														}
 													>
 														{isDefault ? (
@@ -732,8 +771,8 @@ function SidebarLogo() {
 														<>
 															<AddOrganization organizationId={org.id} />
 															<DialogAction
-																title="Delete Organization"
-																description="Are you sure you want to delete this organization?"
+																title={t("org.deleteTitle")}
+																description={t("org.deleteDescription")}
 																type="destructive"
 																onClick={async () => {
 																	await deleteOrganization({
@@ -742,13 +781,13 @@ function SidebarLogo() {
 																		.then(() => {
 																			refetch();
 																			toast.success(
-																				"Organization deleted successfully",
+																				t("org.deletedSuccess"),
 																			);
 																		})
 																		.catch((error) => {
 																			toast.error(
 																				error?.message ||
-																					"Error deleting organization",
+																					t("org.deleteError"),
 																			);
 																		});
 																}}
@@ -806,7 +845,7 @@ function SidebarLogo() {
 								side={"right"}
 								className="w-80"
 							>
-								<DropdownMenuLabel>Pending Invitations</DropdownMenuLabel>
+								<DropdownMenuLabel>{t("invitation.pending")}</DropdownMenuLabel>
 								<div className="flex flex-col gap-2">
 									{invitations && invitations.length > 0 ? (
 										invitations.map((invitation) => (
@@ -819,16 +858,16 @@ function SidebarLogo() {
 														{invitation?.organization?.name}
 													</div>
 													<div className="text-xs text-muted-foreground">
-														Expires:{" "}
+														{t("invitation.expires")}{" "}
 														{new Date(invitation.expiresAt).toLocaleString()}
 													</div>
 													<div className="text-xs text-muted-foreground">
-														Role: {invitation.role}
+														{t("invitation.role")}: {invitation.role}
 													</div>
 												</DropdownMenuItem>
 												<DialogAction
-													title="Accept Invitation"
-													description="Are you sure you want to accept this invitation?"
+													title={t("invitation.acceptTitle")}
+													description={t("invitation.acceptDescription")}
 													type="default"
 													onClick={async () => {
 														const { error } =
@@ -838,24 +877,24 @@ function SidebarLogo() {
 
 														if (error) {
 															toast.error(
-																error.message || "Error accepting invitation",
+																error.message || t("invitation.acceptError"),
 															);
 														} else {
-															toast.success("Invitation accepted successfully");
+															toast.success(t("invitation.acceptSuccess"));
 															await refetchInvitations();
 															await refetch();
 														}
 													}}
 												>
 													<Button size="sm" variant="secondary">
-														Accept Invitation
+														{t("invitation.acceptAction")}
 													</Button>
 												</DialogAction>
 											</div>
 										))
 									) : (
 										<DropdownMenuItem disabled>
-											No pending invitations
+											{t("invitation.none")}
 										</DropdownMenuItem>
 									)}
 								</div>
@@ -869,6 +908,7 @@ function SidebarLogo() {
 }
 
 export default function Page({ children }: Props) {
+	const { t } = useI18n();
 	const [defaultOpen, setDefaultOpen] = useState<boolean | undefined>(
 		undefined,
 	);
@@ -944,7 +984,7 @@ export default function Page({ children }: Props) {
 				</SidebarHeader>
 				<SidebarContent>
 					<SidebarGroup>
-						<SidebarGroupLabel>Home</SidebarGroupLabel>
+						<SidebarGroupLabel>{t("nav.home")}</SidebarGroupLabel>
 						<SidebarMenu>
 							{filteredHome.map((item) => {
 								const isSingle = item.isSingle !== false;
@@ -965,7 +1005,7 @@ export default function Page({ children }: Props) {
 											{isSingle ? (
 												<SidebarMenuButton
 													asChild
-													tooltip={item.title}
+													tooltip={translateMenuLabel(item.title, t)}
 													className={cn(isActive && "bg-border")}
 												>
 													<Link
@@ -977,19 +1017,19 @@ export default function Page({ children }: Props) {
 																className={cn(isActive && "text-primary")}
 															/>
 														)}
-														<span>{item.title}</span>
+														<span>{translateMenuLabel(item.title, t)}</span>
 													</Link>
 												</SidebarMenuButton>
 											) : (
 												<>
 													<CollapsibleTrigger asChild>
 														<SidebarMenuButton
-															tooltip={item.title}
+															tooltip={translateMenuLabel(item.title, t)}
 															isActive={isActive}
 														>
 															{item.icon && <item.icon />}
 
-															<span>{item.title}</span>
+															<span>{translateMenuLabel(item.title, t)}</span>
 															{item.items?.length && (
 																<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
 															)}
@@ -1017,7 +1057,7 @@ export default function Page({ children }: Props) {
 																					/>
 																				</span>
 																			)}
-																			<span>{subItem.title}</span>
+																			<span>{translateMenuLabel(subItem.title, t)}</span>
 																		</Link>
 																	</SidebarMenuSubButton>
 																</SidebarMenuSubItem>
@@ -1033,7 +1073,7 @@ export default function Page({ children }: Props) {
 						</SidebarMenu>
 					</SidebarGroup>
 					<SidebarGroup>
-						<SidebarGroupLabel>Settings</SidebarGroupLabel>
+						<SidebarGroupLabel>{t("sections.settings")}</SidebarGroupLabel>
 						<SidebarMenu className="gap-1">
 							{filteredSettings.map((item) => {
 								const isSingle = item.isSingle !== false;
@@ -1054,7 +1094,7 @@ export default function Page({ children }: Props) {
 											{isSingle ? (
 												<SidebarMenuButton
 													asChild
-													tooltip={item.title}
+													tooltip={translateMenuLabel(item.title, t)}
 													className={cn(isActive && "bg-border")}
 												>
 													<Link
@@ -1066,19 +1106,19 @@ export default function Page({ children }: Props) {
 																className={cn(isActive && "text-primary")}
 															/>
 														)}
-														<span>{item.title}</span>
+														<span>{translateMenuLabel(item.title, t)}</span>
 													</Link>
 												</SidebarMenuButton>
 											) : (
 												<>
 													<CollapsibleTrigger asChild>
 														<SidebarMenuButton
-															tooltip={item.title}
+															tooltip={translateMenuLabel(item.title, t)}
 															isActive={isActive}
 														>
 															{item.icon && <item.icon />}
 
-															<span>{item.title}</span>
+															<span>{translateMenuLabel(item.title, t)}</span>
 															{item.items?.length && (
 																<ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
 															)}
@@ -1106,7 +1146,7 @@ export default function Page({ children }: Props) {
 																					/>
 																				</span>
 																			)}
-																			<span>{subItem.title}</span>
+																			<span>{translateMenuLabel(subItem.title, t)}</span>
 																		</Link>
 																	</SidebarMenuSubButton>
 																</SidebarMenuSubItem>
@@ -1122,7 +1162,7 @@ export default function Page({ children }: Props) {
 						</SidebarMenu>
 					</SidebarGroup>
 					<SidebarGroup className="group-data-[collapsible=icon]:hidden">
-						<SidebarGroupLabel>Extra</SidebarGroupLabel>
+						<SidebarGroupLabel>{t("sections.extra")}</SidebarGroupLabel>
 						<SidebarMenu>
 							{help.map((item: ExternalLink) => (
 								<SidebarMenuItem key={item.name}>
@@ -1136,7 +1176,7 @@ export default function Page({ children }: Props) {
 											<span className="mr-2">
 												<item.icon className="h-4 w-4" />
 											</span>
-											<span>{item.name}</span>
+											<span>{translateMenuLabel(item.name, t)}</span>
 										</a>
 									</SidebarMenuButton>
 								</SidebarMenuItem>
@@ -1161,7 +1201,7 @@ export default function Page({ children }: Props) {
 						)}
 						{dokployVersion && (
 							<div className="px-3 text-xs text-muted-foreground text-center group-data-[collapsible=icon]:hidden">
-								Version {dokployVersion}
+								{t("common.version")} {dokployVersion}
 							</div>
 						)}
 					</SidebarMenu>

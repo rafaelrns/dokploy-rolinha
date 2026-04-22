@@ -61,3 +61,10 @@ For production self-hosted environments:
   - `RAILPACK_INSTALLER_SHA256`
   - `RCLONE_INSTALLER_SHA256`
   - `BUILDPACKS_ARCHIVE_SHA256`
+
+## Idioma da interface (PT-BR/EN)
+
+- O idioma padrão é `pt-BR`.
+- O usuário pode trocar para `en` no menu de conta.
+- A preferência é salva no banco (`user.locale`) e replicada no cookie `dokploy_locale`.
+- Se não existir preferência (usuários legados), o fallback é `pt-BR`.

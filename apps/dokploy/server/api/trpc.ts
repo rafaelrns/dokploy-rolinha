@@ -19,6 +19,8 @@ import type { CreateNextContextOptions } from "@trpc/server/adapters/next";
 import type { Session, User } from "better-auth";
 import superjson from "superjson";
 import { ZodError } from "zod";
+import { getApiI18nMessage } from "@/server/api/utils/api-i18n";
+import { resolveApiLocale } from "@/server/api/utils/locale";
 
 type Resource = keyof typeof statements;
 type ActionOf<R extends Resource> = (typeof statements)[R][number];
@@ -38,6 +40,7 @@ interface CreateContextOptions {
 				ownerId: string;
 				enableEnterpriseFeatures: boolean;
 				isValidEnterpriseLicense: boolean;
+				locale?: "pt-BR" | "en" | null;
 		  })
 		| null;
 	session:
@@ -45,6 +48,7 @@ interface CreateContextOptions {
 		| null;
 	req: CreateNextContextOptions["req"];
 	res: CreateNextContextOptions["res"];
+	locale?: "pt-BR" | "en";
 }
 
 /**
@@ -64,6 +68,7 @@ const createInnerTRPCContext = (opts: CreateContextOptions) => {
 		req: opts.req,
 		res: opts.res,
 		user: opts.user,
+		...(opts.locale ? { locale: opts.locale } : {}),
 	};
 };
 
@@ -78,6 +83,7 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 
 	// Get from the request
 	const { session, user } = await validateRequest(req);
+	const locale = resolveApiLocale(req, (user as any)?.locale);
 
 	return createInnerTRPCContext({
 		req,
@@ -97,8 +103,10 @@ export const createTRPCContext = async (opts: CreateNextContextOptions) => {
 					role: user.role as "owner" | "member" | "admin",
 					id: user.id,
 					ownerId: user.ownerId,
+					locale: (user as any).locale ?? null,
 				}
 			: null,
+		locale,
 	});
 };
 
@@ -160,7 +168,10 @@ export const publicProcedure = t.procedure;
  */
 export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 	if (!ctx.session || !ctx.user) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: getApiI18nMessage(ctx.locale ?? "pt-BR", "unauthorized"),
+		});
 	}
 	return next({
 		ctx: {
@@ -178,7 +189,10 @@ export const cliProcedure = t.procedure.use(({ ctx, next }) => {
 		!ctx.user ||
 		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
 	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: getApiI18nMessage(ctx.locale ?? "pt-BR", "forbidden"),
+		});
 	}
 	return next({
 		ctx: {
@@ -196,7 +210,10 @@ export const adminProcedure = t.procedure.use(({ ctx, next }) => {
 		!ctx.user ||
 		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
 	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: getApiI18nMessage(ctx.locale ?? "pt-BR", "forbidden"),
+		});
 	}
 	return next({
 		ctx: {
@@ -219,7 +236,10 @@ export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
 		!ctx.user ||
 		(ctx.user.role !== "owner" && ctx.user.role !== "admin")
 	) {
-		throw new TRPCError({ code: "UNAUTHORIZED" });
+		throw new TRPCError({
+			code: "UNAUTHORIZED",
+			message: getApiI18nMessage(ctx.locale ?? "pt-BR", "forbidden"),
+		});
 	}
 
 	const hasValidLicenseResult = await hasValidLicense(
@@ -229,7 +249,7 @@ export const enterpriseProcedure = t.procedure.use(async ({ ctx, next }) => {
 	if (!hasValidLicenseResult) {
 		throw new TRPCError({
 			code: "FORBIDDEN",
-			message: "Valid enterprise license required",
+			message: getApiI18nMessage(ctx.locale ?? "pt-BR", "licenseRequired"),
 		});
 	}
 

@@ -1,4 +1,5 @@
 import { renderAsync } from "@react-email/components";
+import { resolveServerLocale } from "../i18n/locale";
 import VerifyEmailTemplate from "../emails/emails/verify-email";
 import { sendEmailNotification } from "../utils/notifications/utils";
 
@@ -34,20 +35,25 @@ export const sendVerificationEmail = async ({
 	userName,
 	email,
 	verificationUrl,
+	locale,
 }: {
 	userName: string;
 	email: string;
 	verificationUrl: string;
+	locale?: string | null;
 }) => {
+	const resolvedLocale = resolveServerLocale(locale);
 	const html = await renderAsync(
 		VerifyEmailTemplate({
 			userName: userName || "User",
 			verificationUrl,
+			locale: resolvedLocale,
 		}),
 	);
 	await sendEmail({
 		email,
-		subject: "Verify your email",
+		subject:
+			resolvedLocale === "en" ? "Verify your email" : "Verifique seu e-mail",
 		text: html,
 	});
 };

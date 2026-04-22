@@ -34,6 +34,12 @@ import * as bcrypt from "bcrypt";
 import { and, asc, eq, gt } from "drizzle-orm";
 import { z } from "zod";
 import { audit } from "@/server/api/utils/audit";
+import { getApiI18nMessage } from "@/server/api/utils/api-i18n";
+import {
+	type ApiLocale,
+	isApiLocale,
+	setLocaleCookie,
+} from "@/server/api/utils/locale";
 import {
 	adminProcedure,
 	createTRPCRouter,
@@ -121,12 +127,33 @@ export const userRouter = createTRPCRouter({
 		return {
 			user: {
 				id: ctx.user.id,
+				locale: isApiLocale(ctx.user.locale) ? ctx.user.locale : ctx.locale,
 			},
 			session: {
 				activeOrganizationId: ctx.session.activeOrganizationId,
 			},
 		};
 	}),
+	getLocale: publicProcedure.query(async ({ ctx }) => {
+		const locale = isApiLocale(ctx.user?.locale) ? ctx.user.locale : ctx.locale;
+		return { locale };
+	}),
+	setLocale: protectedProcedure
+		.input(
+			z.object({
+				locale: z.enum(["pt-BR", "en"]),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			await db
+				.update(user)
+				.set({
+					locale: input.locale,
+				})
+				.where(eq(user.id, ctx.user.id));
+			setLocaleCookie(ctx.res, input.locale as ApiLocale);
+			return { locale: input.locale };
+		}),
 	get: protectedProcedure.query(async ({ ctx }) => {
 		const memberResult = await db.query.member.findFirst({
 			where: and(
@@ -212,14 +239,20 @@ export const userRouter = createTRPCRouter({
 				if (!correctPassword) {
 					throw new TRPCError({
 						code: "BAD_REQUEST",
-						message: "Current password is incorrect",
+						message: getApiI18nMessage(
+							ctx.locale ?? "pt-BR",
+							"currentPasswordIncorrect",
+						),
 					});
 				}
 
 				if (!input.password) {
 					throw new TRPCError({
 						code: "BAD_REQUEST",
-						message: "New password is required",
+						message: getApiI18nMessage(
+							ctx.locale ?? "pt-BR",
+							"newPasswordRequired",
+						),
 					});
 				}
 				await db
@@ -243,7 +276,9 @@ export const userRouter = createTRPCRouter({
 				throw new TRPCError({
 					code: "BAD_REQUEST",
 					message:
-						error instanceof Error ? error.message : "Failed to update user",
+						error instanceof Error
+							? error.message
+							: getApiI18nMessage(ctx.locale ?? "pt-BR", "unexpected"),
 				});
 			}
 		}),
@@ -639,8 +674,18 @@ export const userRouter = createTRPCRouter({
 			);
 
 			try {
+				const isEnglish = ctx.locale === "en";
+				const invitationSubject = isEnglish
+					? "Invitation to join organization"
+					: "Convite para entrar na organização";
 				const htmlContent = `
-\t\t\t\t<p>You are invited to join ${organization?.name || "organization"} on Dokploy. Click the link to accept the invitation: <a href="${inviteLink}">Accept Invitation</a></p>
+\t\t\t\t<p>${
+					isEnglish
+						? `You are invited to join ${organization?.name || "organization"} on Dokploy. Click the link to accept the invitation`
+						: `Você foi convidado para entrar na organização ${organization?.name || "organização"} no Dokploy. Clique no link para aceitar o convite`
+				}: <a href="${inviteLink}">${
+					isEnglish ? "Accept invitation" : "Aceitar convite"
+				}</a></p>
 \t\t\t\t`;
 
 				if (email) {
@@ -649,7 +694,7 @@ export const userRouter = createTRPCRouter({
 							...email,
 							toAddresses: [currentInvitation?.email || ""],
 						},
-						"Invitation to join organization",
+						invitationSubject,
 						htmlContent,
 					);
 				} else if (resend) {
@@ -658,7 +703,7 @@ export const userRouter = createTRPCRouter({
 							...resend,
 							toAddresses: [currentInvitation?.email || ""],
 						},
-						"Invitation to join organization",
+						invitationSubject,
 						htmlContent,
 					);
 				}

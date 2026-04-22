@@ -7,9 +7,12 @@ import Head from "next/head";
 import { ThemeProvider } from "next-themes";
 import NextTopLoader from "nextjs-toploader";
 import type { ReactElement, ReactNode } from "react";
+import { useEffect } from "react";
 import { SearchCommand } from "@/components/dashboard/search-command";
 import { WhitelabelingProvider } from "@/components/proprietary/whitelabeling/whitelabeling-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { LocaleProvider } from "@/lib/i18n";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,6 +24,19 @@ export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
 
 type AppPropsWithLayout = AppProps & {
 	Component: NextPageWithLayout;
+};
+
+const LocaleBootstrap = () => {
+	const { locale, setLocale } = useI18n();
+	const { data } = api.user.getLocale.useQuery();
+
+	useEffect(() => {
+		if (data?.locale && data.locale !== locale) {
+			setLocale(data.locale);
+		}
+	}, [data?.locale, locale, setLocale]);
+
+	return null;
 };
 
 const MyApp = ({
@@ -50,9 +66,12 @@ const MyApp = ({
 			>
 				<NextTopLoader color="hsl(var(--sidebar-ring))" />
 				<WhitelabelingProvider />
-				<Toaster richColors />
-				<SearchCommand />
-				{getLayout(<Component {...pageProps} />)}
+				<LocaleProvider>
+					<LocaleBootstrap />
+					<Toaster richColors />
+					<SearchCommand />
+					{getLayout(<Component {...pageProps} />)}
+				</LocaleProvider>
 			</ThemeProvider>
 		</>
 	);

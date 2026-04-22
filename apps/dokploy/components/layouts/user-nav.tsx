@@ -1,5 +1,6 @@
 import { ChevronsUpDown } from "lucide-react";
 import { useRouter } from "next/router";
+import { useEffect } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
 	DropdownMenu,
@@ -11,6 +12,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { authClient } from "@/lib/auth-client";
+import { SUPPORTED_LOCALES, useI18n } from "@/lib/i18n";
 import { getFallbackAvatarInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { ModeToggle } from "../ui/modeToggle";
@@ -20,9 +22,27 @@ const _AUTO_CHECK_UPDATES_INTERVAL_MINUTES = 7;
 
 export const UserNav = () => {
 	const router = useRouter();
+	const { locale, setLocale, t } = useI18n();
 	const { data } = api.user.get.useQuery();
+	const { data: localeData } = api.user.getLocale.useQuery();
+	const { mutateAsync: persistLocale } = api.user.setLocale.useMutation();
 	const { data: permissions } = api.user.getPermissions.useQuery();
 	const { data: isCloud } = api.settings.isCloud.useQuery();
+
+	const applyLocale = async (nextLocale: (typeof SUPPORTED_LOCALES)[number]) => {
+		setLocale(nextLocale);
+		try {
+			await persistLocale({ locale: nextLocale });
+		} catch {
+			// Keep UI responsive even when locale persistence fails.
+		}
+	};
+
+	useEffect(() => {
+		if (localeData?.locale && localeData.locale !== locale) {
+			setLocale(localeData.locale);
+		}
+	}, [localeData?.locale, locale, setLocale]);
 
 	// const { mutateAsync } = api.auth.logout.useMutation();
 
@@ -46,7 +66,7 @@ export const UserNav = () => {
 						</AvatarFallback>
 					</Avatar>
 					<div className="grid flex-1 text-left text-sm leading-tight">
-						<span className="truncate font-semibold">Account</span>
+						<span className="truncate font-semibold">{t("common.account")}</span>
 						<span className="truncate text-xs">{data?.user?.email}</span>
 					</div>
 					<ChevronsUpDown className="ml-auto size-4" />
@@ -60,13 +80,26 @@ export const UserNav = () => {
 			>
 				<div className="flex items-center justify-between px-2 py-1.5">
 					<DropdownMenuLabel className="flex flex-col">
-						My Account
+						{t("userNav.myAccount")}
 						<span className="text-xs font-normal text-muted-foreground">
 							{data?.user?.email}
 						</span>
 					</DropdownMenuLabel>
 					<ModeToggle />
 				</div>
+				<DropdownMenuSeparator />
+				<DropdownMenuLabel className="text-xs text-muted-foreground">
+					{t("common.language")}
+				</DropdownMenuLabel>
+				{SUPPORTED_LOCALES.map((value) => (
+					<DropdownMenuItem
+						key={value}
+						className="cursor-pointer"
+						onClick={() => applyLocale(value)}
+					>
+						{t(`locale.${value}`)} {locale === value ? "✓" : ""}
+					</DropdownMenuItem>
+				))}
 				<DropdownMenuSeparator />
 				<DropdownMenuGroup>
 					<DropdownMenuItem
@@ -75,7 +108,7 @@ export const UserNav = () => {
 							router.push("/dashboard/settings/profile");
 						}}
 					>
-						Profile
+						{t("common.profile")}
 					</DropdownMenuItem>
 					<DropdownMenuItem
 						className="cursor-pointer"
@@ -83,7 +116,7 @@ export const UserNav = () => {
 							router.push("/dashboard/home");
 						}}
 					>
-						Projects
+						{t("common.projects")}
 					</DropdownMenuItem>
 					{!isCloud ? (
 						<>
@@ -93,7 +126,7 @@ export const UserNav = () => {
 									router.push("/dashboard/monitoring");
 								}}
 							>
-								Monitoring
+								{t("common.monitoring")}
 							</DropdownMenuItem>
 							{permissions?.traefikFiles.read && (
 								<DropdownMenuItem
@@ -102,7 +135,7 @@ export const UserNav = () => {
 										router.push("/dashboard/traefik");
 									}}
 								>
-									Traefik
+									{t("common.traefik")}
 								</DropdownMenuItem>
 							)}
 							{permissions?.docker.read && (
@@ -114,7 +147,7 @@ export const UserNav = () => {
 										});
 									}}
 								>
-									Docker
+									{t("common.docker")}
 								</DropdownMenuItem>
 							)}
 						</>
@@ -126,7 +159,7 @@ export const UserNav = () => {
 									router.push("/dashboard/settings/servers");
 								}}
 							>
-								Servers
+								{t("common.servers")}
 							</DropdownMenuItem>
 						)
 					)}
@@ -138,7 +171,7 @@ export const UserNav = () => {
 							router.push("/dashboard/settings/billing");
 						}}
 					>
-						Billing
+						{t("common.billing")}
 					</DropdownMenuItem>
 				)}
 				<DropdownMenuSeparator />
@@ -153,7 +186,7 @@ export const UserNav = () => {
 						// });
 					}}
 				>
-					Log out
+					{t("common.logout")}
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>

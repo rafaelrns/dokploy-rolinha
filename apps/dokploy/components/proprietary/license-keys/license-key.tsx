@@ -7,9 +7,11 @@ import { Button } from "@/components/ui/button";
 import { CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 
 export function LicenseKeySettings() {
+	const { t } = useI18n();
 	const utils = api.useUtils();
 	const { data, isPending } = api.licenseKey.getEnterpriseSettings.useQuery();
 	const { mutateAsync: updateEnterpriseSettings, isPending: isSaving } =
@@ -49,7 +51,7 @@ export function LicenseKeySettings() {
 				<div className="flex items-center gap-2 justify-center min-h-[25vh]">
 					<Loader2 className="size-6 text-muted-foreground animate-spin" />
 					<span className="text-sm text-muted-foreground">
-						Checking license key...
+						{t("license.checking")}
 					</span>
 				</div>
 			) : (
@@ -58,13 +60,13 @@ export function LicenseKeySettings() {
 						<div className="flex items-center justify-between gap-4">
 							<div className="flex items-center gap-2">
 								<Key className="size-6 text-muted-foreground" />
-								<CardTitle className="text-xl">License Key</CardTitle>
+								<CardTitle className="text-xl">{t("license.title")}</CardTitle>
 							</div>
 
 							{enabled && (
 								<div className="flex items-center gap-2">
 									<span className="text-xs text-muted-foreground">
-										{enabled ? "Enabled" : "Disabled"}
+										{enabled ? t("common.enabled") : t("common.disabled")}
 									</span>
 									<Switch
 										checked={enabled}
@@ -75,10 +77,10 @@ export function LicenseKeySettings() {
 													enableEnterpriseFeatures: next,
 												});
 												await utils.licenseKey.getEnterpriseSettings.invalidate();
-												toast.success("Enterprise features updated");
+												toast.success(t("license.enterpriseUpdated"));
 											} catch (error) {
 												console.error(error);
-												toast.error("Failed to update enterprise features");
+												toast.error(t("license.enterpriseUpdateError"));
 											}
 										}}
 									/>
@@ -87,34 +89,33 @@ export function LicenseKeySettings() {
 						</div>
 
 						<p className="text-sm text-muted-foreground">
-							To unlock extra features you need an enterprise license key.
-							Contact us{" "}
+							{t("license.unlockMessage")}{" "}
 							<Link
 								href="https://dokploy.com/contact"
 								target="_blank"
 								rel="noreferrer"
 								className="underline underline-offset-4"
 							>
-								here
+								{t("license.contactHere")}
 							</Link>
 							.
 						</p>
 						<div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
 							<div>
-								License provider source:{" "}
+								{t("license.providerSource")}{" "}
 								<span className="font-medium">
 									{data?.enterpriseLicenseValidationSource || "unknown"}
 								</span>
 							</div>
 							{data?.enterpriseLicensePlan && (
 								<div>
-									Current plan:{" "}
+									{t("license.currentPlan")}{" "}
 									<span className="font-medium">{data.enterpriseLicensePlan}</span>
 								</div>
 							)}
 							{data?.enterpriseLicenseExpiresAt && (
 								<div>
-									Expires at:{" "}
+									{t("license.expiresAt")}{" "}
 									<span className="font-medium">
 										{new Date(data.enterpriseLicenseExpiresAt).toLocaleString()}
 									</span>
@@ -122,7 +123,7 @@ export function LicenseKeySettings() {
 							)}
 							{data?.enterpriseLicenseGraceUntil && (
 								<div>
-									Grace until:{" "}
+									{t("license.graceUntil")}{" "}
 									<span className="font-medium">
 										{new Date(data.enterpriseLicenseGraceUntil).toLocaleString()}
 									</span>
@@ -130,7 +131,8 @@ export function LicenseKeySettings() {
 							)}
 							{data?.enterpriseLicenseValidationError && (
 								<div className="text-amber-600 dark:text-amber-400">
-									Last validation error: {data.enterpriseLicenseValidationError}
+									{t("license.lastValidationError")}{" "}
+									{data.enterpriseLicenseValidationError}
 								</div>
 							)}
 						</div>
@@ -140,12 +142,12 @@ export function LicenseKeySettings() {
 							{isUsingLocalProvider && (
 								<div className="rounded-lg border bg-muted/20 p-3">
 									<div className="mb-3 text-sm font-medium">
-										Generate local fork license key
+										{t("license.generateLocalTitle")}
 									</div>
 									<div className="grid gap-3 md:grid-cols-3">
 										<div className="space-y-2">
 											<label className="text-xs font-medium" htmlFor="localPlan">
-												Plan
+												{t("license.plan")}
 											</label>
 											<select
 												id="localPlan"
@@ -170,7 +172,7 @@ export function LicenseKeySettings() {
 												className="text-xs font-medium"
 												htmlFor="localExpiresInDays"
 											>
-												Expires in days
+												{t("license.expiresInDays")}
 											</label>
 											<Input
 												id="localExpiresInDays"
@@ -183,7 +185,7 @@ export function LicenseKeySettings() {
 										</div>
 										<div className="space-y-2">
 											<label className="text-xs font-medium" htmlFor="localFeatures">
-												Features (comma separated, optional)
+												{t("license.features")}
 											</label>
 											<Input
 												id="localFeatures"
@@ -221,19 +223,19 @@ export function LicenseKeySettings() {
 													setLicenseKey(response.key);
 													await navigator.clipboard.writeText(response.key);
 													toast.success(
-														"Local key generated and copied to clipboard",
+														t("license.generateLocalSuccess"),
 													);
 												} catch (error) {
 													console.error(error);
 													toast.error(
 														error instanceof Error
 															? error.message
-															: "Failed to generate local key",
+															: t("license.generateLocalError"),
 													);
 												}
 											}}
 										>
-											Generate local key
+											{t("license.generateLocal")}
 										</Button>
 									</div>
 								</div>
@@ -241,11 +243,11 @@ export function LicenseKeySettings() {
 							<div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
 								<div className="space-y-2">
 									<label className="text-sm font-medium" htmlFor="licenseKey">
-										License Key
+										{t("license.keyLabel")}
 									</label>
 									<Input
 										id="licenseKey"
-										placeholder="Enter your enterprise license key"
+										placeholder={t("license.keyPlaceholder")}
 										value={licenseKey}
 										onChange={(e) => setLicenseKey(e.target.value)}
 									/>

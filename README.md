@@ -54,6 +54,13 @@ Release-by-release risk entries are tracked in [`RISK_CHANGELOG.md`](RISK_CHANGE
 
 For detailed documentation, visit [docs.dokploy.com](https://docs.dokploy.com).
 
+## 🌐 Languages / Idiomas
+
+- Default UI language: `pt-BR`
+- Optional language: `en`
+- User preference is persisted in the user profile (`user.locale`) and mirrored to `dokploy_locale` cookie.
+- For legacy users without locale set, Dokploy falls back to `pt-BR`.
+
 
 [Github Sponsors](https://github.com/sponsors/Siumauricio)
 

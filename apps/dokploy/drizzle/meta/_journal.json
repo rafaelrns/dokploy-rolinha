@@ -1170,6 +1170,13 @@
       "when": 1776835200000,
       "tag": "0166_local_enterprise_license_provider",
       "breakpoints": true
+    },
+    {
+      "idx": 167,
+      "version": "7",
+      "when": 1776926400000,
+      "tag": "0167_natural_locale_user",
+      "breakpoints": true
     }
   ]
 }

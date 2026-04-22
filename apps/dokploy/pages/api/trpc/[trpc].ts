@@ -5,6 +5,8 @@ import {
 	getClientIp,
 	isAllowedOrigin,
 } from "@/server/api/utils/http-security";
+import { getApiI18nMessage } from "@/server/api/utils/api-i18n";
+import { resolveApiLocale } from "@/server/api/utils/locale";
 import { appRouter } from "@/server/api/root";
 import { createTRPCContext } from "@/server/api/trpc";
 
@@ -22,12 +24,13 @@ const trpcHandler = createNextApiHandler({
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+	const locale = resolveApiLocale(req);
 	const isMutationLikeMethod = req.method === "POST";
 	if (isMutationLikeMethod && !isAllowedOrigin(req)) {
 		console.warn(
 			`[http-security] Rejected tRPC request due to invalid origin. host=${req.headers.host || "unknown"} origin=${req.headers.origin || "unknown"}`,
 		);
-		res.status(403).json({ message: "Invalid origin" });
+		res.status(403).json({ message: getApiI18nMessage(locale, "invalidOrigin") });
 		return;
 	}
 
@@ -47,7 +50,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 	res.setHeader("X-RateLimit-Reset", String(rate.resetAt));
 	if (!rate.allowed) {
 		console.warn(`[http-security] Rejected tRPC request due to rate limit. ip=${ip}`);
-		res.status(429).json({ message: "Too many requests" });
+		res
+			.status(429)
+			.json({ message: getApiI18nMessage(locale, "tooManyRequests") });
 		return;
 	}
 

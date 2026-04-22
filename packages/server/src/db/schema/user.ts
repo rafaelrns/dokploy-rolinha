@@ -80,6 +80,7 @@ export const user = pgTable("user", {
 	sendInvoiceNotifications: boolean("sendInvoiceNotifications")
 		.notNull()
 		.default(false),
+	locale: text("locale").$type<"pt-BR" | "en">().default("pt-BR"),
 	isEnterpriseCloud: boolean("isEnterpriseCloud").notNull().default(false),
 	trustedOrigins: text("trustedOrigins").array(),
 	bookmarkedTemplates: text("bookmarkedTemplates")
@@ -259,4 +260,5 @@ export const apiUpdateUser = createSchema.partial().extend({
 	currentPassword: z.string().optional(),
 	firstName: z.string().optional(),
 	lastName: z.string().optional(),
+	locale: z.enum(["pt-BR", "en"]).optional(),
 });
