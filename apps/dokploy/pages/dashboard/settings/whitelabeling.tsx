@@ -4,12 +4,16 @@ import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { useI18n } from "@/lib/i18n";
 import { EnterpriseFeatureGate } from "@/components/proprietary/enterprise-feature-gate";
 import { WhitelabelingSettings } from "@/components/proprietary/whitelabeling/whitelabeling-settings";
 import { Card } from "@/components/ui/card";
 import { appRouter } from "@/server/api/root";
 
 const Page = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
+
 	return (
 		<div className="w-full">
 			<div className="h-full rounded-xl max-w-5xl mx-auto flex flex-col gap-4">
@@ -18,10 +22,12 @@ const Page = () => {
 						<div className="p-6">
 							<EnterpriseFeatureGate
 								lockedProps={{
-									title: "Enterprise Whitelabeling",
+									title: isPt ? "Whitelabeling Enterprise" : "Enterprise Whitelabeling",
 									description:
-										"Whitelabeling allows you to fully customize logos, colors, CSS, error pages, and more. Add a valid license to configure it.",
-									ctaLabel: "Go to License",
+										isPt
+											? "Whitelabeling permite personalizar completamente logos, cores, CSS, páginas de erro e mais. Adicione uma licença válida para configurar."
+											: "Whitelabeling allows you to fully customize logos, colors, CSS, error pages, and more. Add a valid license to configure it.",
+									ctaLabel: isPt ? "Ir para Licença" : "Go to License",
 								}}
 							>
 								<WhitelabelingSettings />

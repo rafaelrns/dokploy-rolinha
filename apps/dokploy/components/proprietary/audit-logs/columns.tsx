@@ -26,78 +26,83 @@ import {
 	DialogTrigger,
 } from "@/components/ui/dialog";
 
-const ACTION_CONFIG: Record<
-	string,
-	{ label: string; icon: React.ElementType; className: string }
-> = {
-	create: {
-		label: "Created",
-		icon: PlusCircle,
-		className:
-			"bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-	},
-	update: {
-		label: "Updated",
-		icon: RefreshCw,
-		className:
-			"bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-	},
-	delete: {
-		label: "Deleted",
-		icon: Trash2,
-		className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
-	},
-	deploy: {
-		label: "Deployed",
-		icon: Upload,
-		className:
-			"bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
-	},
-	cancel: {
-		label: "Cancelled",
-		icon: XCircle,
-		className:
-			"bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-	},
-	redeploy: {
-		label: "Redeployed",
-		icon: RotateCcw,
-		className:
-			"bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
-	},
-	login: {
-		label: "Login",
-		icon: LogIn,
-		className:
-			"bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
-	},
-	logout: {
-		label: "Logout",
-		icon: LogOut,
-		className:
-			"bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
-	},
-};
+const getActionConfig = (isPt: boolean) =>
+	({
+		create: {
+			label: isPt ? "Criado" : "Created",
+			icon: PlusCircle,
+			className:
+				"bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+		},
+		update: {
+			label: isPt ? "Atualizado" : "Updated",
+			icon: RefreshCw,
+			className:
+				"bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+		},
+		delete: {
+			label: isPt ? "Excluído" : "Deleted",
+			icon: Trash2,
+			className:
+				"bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20",
+		},
+		deploy: {
+			label: isPt ? "Deploy realizado" : "Deployed",
+			icon: Upload,
+			className:
+				"bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+		},
+		cancel: {
+			label: isPt ? "Cancelado" : "Cancelled",
+			icon: XCircle,
+			className:
+				"bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+		},
+		redeploy: {
+			label: isPt ? "Redeploy realizado" : "Redeployed",
+			icon: RotateCcw,
+			className:
+				"bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20",
+		},
+		login: {
+			label: "Login",
+			icon: LogIn,
+			className:
+				"bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/20",
+		},
+		logout: {
+			label: "Logout",
+			icon: LogOut,
+			className:
+				"bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20",
+		},
+	}) satisfies Record<
+		string,
+		{ label: string; icon: React.ElementType; className: string }
+	>;
 
-const RESOURCE_LABELS: Record<string, string> = {
-	project: "Project",
-	service: "Service",
-	environment: "Environment",
+const getResourceLabels = (isPt: boolean): Record<string, string> => ({
+	project: isPt ? "Projeto" : "Project",
+	service: isPt ? "Serviço" : "Service",
+	environment: isPt ? "Ambiente" : "Environment",
 	deployment: "Deployment",
-	user: "User",
-	customRole: "Custom Role",
-	domain: "Domain",
-	certificate: "Certificate",
-	registry: "Registry",
-	server: "Server",
-	sshKey: "SSH Key",
-	gitProvider: "Git Provider",
-	notification: "Notification",
-	settings: "Settings",
-	session: "Session",
-};
+	user: isPt ? "Usuário" : "User",
+	customRole: isPt ? "Papel customizado" : "Custom Role",
+	domain: isPt ? "Domínio" : "Domain",
+	certificate: isPt ? "Certificado" : "Certificate",
+	registry: isPt ? "Registro" : "Registry",
+	server: isPt ? "Servidor" : "Server",
+	sshKey: isPt ? "Chave SSH" : "SSH Key",
+	gitProvider: isPt ? "Provedor Git" : "Git Provider",
+	notification: isPt ? "Notificação" : "Notification",
+	settings: isPt ? "Configurações" : "Settings",
+	session: isPt ? "Sessão" : "Session",
+});
 
-function MetadataCell({ metadata }: { metadata: string | null }) {
+function MetadataCell({
+	metadata,
+	isPt,
+}: { metadata: string | null; isPt: boolean }) {
 	if (!metadata)
 		return <span className="text-muted-foreground text-sm">—</span>;
 
@@ -114,12 +119,12 @@ function MetadataCell({ metadata }: { metadata: string | null }) {
 			<DialogTrigger asChild>
 				<Button variant="ghost" size="sm" className="h-7 gap-1.5 text-xs">
 					<FileJson className="h-3.5 w-3.5" />
-					View
+					{isPt ? "Ver" : "View"}
 				</Button>
 			</DialogTrigger>
 			<DialogContent className="max-w-lg">
 				<DialogHeader>
-					<DialogTitle>Metadata</DialogTitle>
+					<DialogTitle>{isPt ? "Metadados" : "Metadata"}</DialogTitle>
 				</DialogHeader>
 				<CodeEditor
 					value={formatted}
@@ -133,98 +138,102 @@ function MetadataCell({ metadata }: { metadata: string | null }) {
 	);
 }
 
-export const columns: ColumnDef<AuditLog>[] = [
-	{
-		accessorKey: "createdAt",
-		header: ({ column }) => (
-			<Button
-				variant="ghost"
-				onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-			>
-				Date
-				<ArrowUpDown className="ml-2 h-4 w-4" />
-			</Button>
-		),
-		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground whitespace-nowrap">
-				{format(new Date(row.getValue("createdAt")), "MMM d, yyyy HH:mm")}
-			</span>
-		),
-	},
-	{
-		accessorKey: "userEmail",
-		header: ({ column }) => (
-			<Button
-				variant="ghost"
-				onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-			>
-				User
-				<ArrowUpDown className="ml-2 h-4 w-4" />
-			</Button>
-		),
-		cell: ({ row }) => (
-			<span className="text-sm">{row.getValue("userEmail")}</span>
-		),
-	},
-	{
-		accessorKey: "action",
-		header: ({ column }) => (
-			<Button
-				variant="ghost"
-				onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-			>
-				Action
-				<ArrowUpDown className="ml-2 h-4 w-4" />
-			</Button>
-		),
-		cell: ({ row }) => {
-			const action = row.getValue("action") as string;
-			const config = ACTION_CONFIG[action];
-			if (!config) {
-				return <span className="text-xs text-muted-foreground">{action}</span>;
-			}
-			const Icon = config.icon;
-			return (
-				<span
-					className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+export const getAuditColumns = (isPt: boolean): ColumnDef<AuditLog>[] => {
+	const ACTION_CONFIG = getActionConfig(isPt);
+	const RESOURCE_LABELS = getResourceLabels(isPt);
+	return [
+		{
+			accessorKey: "createdAt",
+			header: ({ column }) => (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 				>
-					<Icon className="size-3" />
-					{config.label}
+					{isPt ? "Data" : "Date"}
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			),
+			cell: ({ row }) => (
+				<span className="text-sm text-muted-foreground whitespace-nowrap">
+					{format(new Date(row.getValue("createdAt")), "MMM d, yyyy HH:mm")}
 				</span>
-			);
+			),
 		},
-	},
-	{
-		accessorKey: "resourceType",
-		header: "Resource",
-		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground">
-				{RESOURCE_LABELS[row.getValue("resourceType") as string] ??
-					row.getValue("resourceType")}
-			</span>
-		),
-	},
-	{
-		accessorKey: "resourceName",
-		header: "Name",
-		cell: ({ row }) => (
-			<span className="text-sm font-medium">
-				{(row.getValue("resourceName") as string) ?? "—"}
-			</span>
-		),
-	},
-	{
-		accessorKey: "userRole",
-		header: "Role",
-		cell: ({ row }) => (
-			<span className="text-sm text-muted-foreground capitalize">
-				{row.getValue("userRole")}
-			</span>
-		),
-	},
-	{
-		accessorKey: "metadata",
-		header: "Metadata",
-		cell: ({ row }) => <MetadataCell metadata={row.getValue("metadata")} />,
-	},
-];
+		{
+			accessorKey: "userEmail",
+			header: ({ column }) => (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+				>
+					{isPt ? "Usuário" : "User"}
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			),
+			cell: ({ row }) => <span className="text-sm">{row.getValue("userEmail")}</span>,
+		},
+		{
+			accessorKey: "action",
+			header: ({ column }) => (
+				<Button
+					variant="ghost"
+					onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+				>
+					{isPt ? "Ação" : "Action"}
+					<ArrowUpDown className="ml-2 h-4 w-4" />
+				</Button>
+			),
+			cell: ({ row }) => {
+				const action = row.getValue("action") as string;
+				const config = ACTION_CONFIG[action as keyof typeof ACTION_CONFIG];
+				if (!config) {
+					return <span className="text-xs text-muted-foreground">{action}</span>;
+				}
+				const Icon = config.icon;
+				return (
+					<span
+						className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-xs font-medium ${config.className}`}
+					>
+						<Icon className="size-3" />
+						{config.label}
+					</span>
+				);
+			},
+		},
+		{
+			accessorKey: "resourceType",
+			header: isPt ? "Recurso" : "Resource",
+			cell: ({ row }) => (
+				<span className="text-sm text-muted-foreground">
+					{RESOURCE_LABELS[row.getValue("resourceType") as string] ??
+						row.getValue("resourceType")}
+				</span>
+			),
+		},
+		{
+			accessorKey: "resourceName",
+			header: isPt ? "Nome" : "Name",
+			cell: ({ row }) => (
+				<span className="text-sm font-medium">
+					{(row.getValue("resourceName") as string) ?? "—"}
+				</span>
+			),
+		},
+		{
+			accessorKey: "userRole",
+			header: isPt ? "Perfil" : "Role",
+			cell: ({ row }) => (
+				<span className="text-sm text-muted-foreground capitalize">
+					{row.getValue("userRole")}
+				</span>
+			),
+		},
+		{
+			accessorKey: "metadata",
+			header: isPt ? "Metadados" : "Metadata",
+			cell: ({ row }) => (
+				<MetadataCell metadata={row.getValue("metadata")} isPt={isPt} />
+			),
+		},
+	];
+};

@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import type { ReactElement } from "react";
 import { ShowDeploymentsTable } from "@/components/dashboard/deployments/show-deployments-table";
 import { ShowQueueTable } from "@/components/dashboard/deployments/show-queue-table";
+import { useI18n } from "@/lib/i18n";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import {
 	Card,
@@ -24,6 +25,8 @@ function isValidTab(t: string): t is TabValue {
 
 function DeploymentsPage() {
 	const router = useRouter();
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const tab =
 		router.query.tab && isValidTab(router.query.tab as string)
 			? (router.query.tab as TabValue)
@@ -47,17 +50,21 @@ function DeploymentsPage() {
 							<div>
 								<CardTitle className="text-xl font-bold flex items-center gap-2">
 									<Rocket className="size-5" />
-									Deployments
+									{isPt ? "Deploys" : "Deployments"}
 								</CardTitle>
 								<CardDescription>
-									All application and compose deployments in one place.
+									{isPt
+										? "Todos os deploys de aplicação e compose em um só lugar."
+										: "All application and compose deployments in one place."}
 								</CardDescription>
 							</div>
 						</div>
 						<Tabs value={tab} onValueChange={setTab} className="w-full">
 							<TabsList className="mt-2">
-								<TabsTrigger value="deployments">Deployments</TabsTrigger>
-								<TabsTrigger value="queue">Queue</TabsTrigger>
+								<TabsTrigger value="deployments">
+									{isPt ? "Deploys" : "Deployments"}
+								</TabsTrigger>
+								<TabsTrigger value="queue">{isPt ? "Fila" : "Queue"}</TabsTrigger>
 							</TabsList>
 							<TabsContent value="deployments" className="mt-0 pt-4">
 								<ShowDeploymentsTable />

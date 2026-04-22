@@ -10,10 +10,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { HandleTag } from "./handle-tag";
 
 export const TagManager = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const utils = api.useUtils();
 	const { data: tags, isPending } = api.tag.all.useQuery();
 	const { mutateAsync: deleteTag, isPending: isRemoving } =
@@ -27,16 +30,18 @@ export const TagManager = () => {
 					<CardHeader>
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<TagIcon className="size-6 text-muted-foreground self-center" />
-							Tags
+							{isPt ? "Tags" : "Tags"}
 						</CardTitle>
 						<CardDescription>
-							Create and manage tags to organize your projects
+							{isPt
+								? "Crie e gerencie tags para organizar seus projetos"
+								: "Create and manage tags to organize your projects"}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -45,8 +50,9 @@ export const TagManager = () => {
 									<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center">
 										<TagIcon className="size-6 text-muted-foreground" />
 										<span className="text-base text-muted-foreground text-center">
-											No tags yet. Create your first tag to start organizing
-											projects.
+											{isPt
+												? "Nenhuma tag ainda. Crie sua primeira tag para começar a organizar projetos."
+												: "No tags yet. Create your first tag to start organizing projects."}
 										</span>
 										{permissions?.tag.create && <HandleTag />}
 									</div>
@@ -73,8 +79,12 @@ export const TagManager = () => {
 															)}
 															{permissions?.tag.delete && (
 																<DialogAction
-																	title="Delete Tag"
-																	description={`Are you sure you want to delete the tag "${tag.name}"? This will remove the tag from all projects. This action cannot be undone.`}
+																	title={isPt ? "Excluir tag" : "Delete Tag"}
+																	description={
+																		isPt
+																			? `Tem certeza que deseja excluir a tag "${tag.name}"? Isso removerá a tag de todos os projetos. Esta ação não pode ser desfeita.`
+																			: `Are you sure you want to delete the tag "${tag.name}"? This will remove the tag from all projects. This action cannot be undone.`
+																	}
 																	type="destructive"
 																	onClick={async () => {
 																		await deleteTag({
@@ -83,11 +93,17 @@ export const TagManager = () => {
 																			.then(async () => {
 																				await utils.tag.all.invalidate();
 																				toast.success(
-																					"Tag deleted successfully",
+																					isPt
+																						? "Tag excluída com sucesso"
+																						: "Tag deleted successfully",
 																				);
 																			})
 																			.catch(() => {
-																				toast.error("Error deleting tag");
+																				toast.error(
+																					isPt
+																						? "Erro ao excluir tag"
+																						: "Error deleting tag",
+																				);
 																			});
 																	}}
 																>

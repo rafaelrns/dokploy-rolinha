@@ -19,6 +19,7 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useI18n } from "@/lib/i18n";
 import {
 	Table,
 	TableBody,
@@ -33,6 +34,8 @@ import { AddUserPermissions } from "./add-permissions";
 import { ChangeRole } from "./change-role";
 
 export const ShowUsers = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data: isCloud } = api.settings.isCloud.useQuery();
 	const { data, isPending, refetch } = api.user.all.useQuery();
 	const { mutateAsync } = api.user.remove.useMutation();
@@ -57,16 +60,18 @@ export const ShowUsers = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<Users className="size-6 text-muted-foreground self-center" />
-							Users
+							{isPt ? "Usuários" : "Users"}
 						</CardTitle>
 						<CardDescription>
-							Add your users to your Dokploy account.
+							{isPt
+								? "Adicione usuários à sua conta Dokploy."
+								: "Add your users to your Dokploy account."}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -75,34 +80,43 @@ export const ShowUsers = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<Users className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground">
-											Invite users to your Dokploy account
+											{isPt
+												? "Convide usuários para sua conta Dokploy"
+												: "Invite users to your Dokploy account"}
 										</span>
 									</div>
 								) : (
 									<div className="flex flex-col gap-4  min-h-[25vh]">
 										{hasCustomRolesWithoutLicense && (
 											<AlertBlock type="warning">
-												You have{" "}
+												{isPt ? "Você possui " : "You have "}
 												{membersWithCustomRoles?.length === 1
-													? "1 user"
-													: `${membersWithCustomRoles?.length} users`}{" "}
-												assigned to custom roles. Custom roles will not work
-												without a valid Enterprise license. Please activate your
-												license or change these users to a free role (Admin or
-												Member).
+													? isPt
+														? "1 usuário"
+														: "1 user"
+													: isPt
+														? `${membersWithCustomRoles?.length} usuários`
+														: `${membersWithCustomRoles?.length} users`}{" "}
+												{isPt
+													? "com papéis personalizados. Papéis personalizados não funcionarão sem uma licença Enterprise válida. Ative sua licença ou altere esses usuários para um papel gratuito (Admin ou Member)."
+													: "assigned to custom roles. Custom roles will not work without a valid Enterprise license. Please activate your license or change these users to a free role (Admin or Member)."}
 											</AlertBlock>
 										)}
 										<Table>
 											<TableHeader>
 												<TableRow>
 													<TableHead className="w-[100px]">Email</TableHead>
-													<TableHead className="text-center">Role</TableHead>
+													<TableHead className="text-center">
+														{isPt ? "Perfil" : "Role"}
+													</TableHead>
 													<TableHead className="text-center">2FA</TableHead>
 
 													<TableHead className="text-center">
-														Created At
+														{isPt ? "Criado em" : "Created At"}
 													</TableHead>
-													<TableHead className="text-right">Actions</TableHead>
+													<TableHead className="text-right">
+														{isPt ? "Ações" : "Actions"}
+													</TableHead>
 												</TableRow>
 											</TableHeader>
 											<TableBody>
@@ -158,7 +172,7 @@ export const ShowUsers = () => {
 																{member.user.email}
 																{member.user.id === session?.user?.id && (
 																	<span className="text-muted-foreground ml-1">
-																		(You)
+																		{isPt ? "(Você)" : "(You)"}
 																	</span>
 																)}
 															</TableCell>
@@ -175,8 +189,12 @@ export const ShowUsers = () => {
 															</TableCell>
 															<TableCell className="text-center">
 																{member.user.twoFactorEnabled
-																	? "Enabled"
-																	: "Disabled"}
+																	? isPt
+																		? "Ativado"
+																		: "Enabled"
+																	: isPt
+																		? "Desativado"
+																		: "Disabled"}
 															</TableCell>
 															<TableCell className="text-center">
 																<span className="text-sm text-muted-foreground">
@@ -193,14 +211,14 @@ export const ShowUsers = () => {
 																				className="h-8 w-8 p-0"
 																			>
 																				<span className="sr-only">
-																					Open menu
+																					{isPt ? "Abrir menu" : "Open menu"}
 																				</span>
 																				<MoreHorizontal className="h-4 w-4" />
 																			</Button>
 																		</DropdownMenuTrigger>
 																		<DropdownMenuContent align="end">
 																			<DropdownMenuLabel>
-																				Actions
+																				{isPt ? "Ações" : "Actions"}
 																			</DropdownMenuLabel>
 
 																			{canChangeRole && (
@@ -220,8 +238,12 @@ export const ShowUsers = () => {
 
 																			{canDelete && (
 																				<DialogAction
-																					title="Delete User"
-																					description="Are you sure you want to delete this user?"
+																					title={isPt ? "Excluir usuário" : "Delete User"}
+																					description={
+																						isPt
+																							? "Tem certeza que deseja excluir este usuário?"
+																							: "Are you sure you want to delete this user?"
+																					}
 																					type="destructive"
 																					onClick={async () => {
 																						await mutateAsync({
@@ -229,14 +251,18 @@ export const ShowUsers = () => {
 																						})
 																							.then(() => {
 																								toast.success(
-																									"User deleted successfully",
+																									isPt
+																										? "Usuário excluído com sucesso"
+																										: "User deleted successfully",
 																								);
 																								refetch();
 																							})
 																							.catch((err) => {
 																								toast.error(
 																									err?.message ||
-																										"Error deleting user",
+																										(isPt
+																											? "Erro ao excluir usuário"
+																											: "Error deleting user"),
 																								);
 																							});
 																					}}
@@ -245,15 +271,19 @@ export const ShowUsers = () => {
 																						className="w-full cursor-pointer text-red-500 hover:!text-red-600"
 																						onSelect={(e) => e.preventDefault()}
 																					>
-																						Delete User
+																						{isPt ? "Excluir usuário" : "Delete User"}
 																					</DropdownMenuItem>
 																				</DialogAction>
 																			)}
 
 																			{canUnlink && (
 																				<DialogAction
-																					title="Unlink User"
-																					description="Are you sure you want to unlink this user?"
+																					title={isPt ? "Desvincular usuário" : "Unlink User"}
+																					description={
+																						isPt
+																							? "Tem certeza que deseja desvincular este usuário?"
+																							: "Are you sure you want to unlink this user?"
+																					}
 																					type="destructive"
 																					onClick={async () => {
 																						if (!isCloud) {
@@ -270,13 +300,17 @@ export const ShowUsers = () => {
 																								})
 																									.then(() => {
 																										toast.success(
-																											"User deleted successfully",
+																											isPt
+																												? "Usuário excluído com sucesso"
+																												: "User deleted successfully",
 																										);
 																										refetch();
 																									})
 																									.catch(() => {
 																										toast.error(
-																											"Error deleting user",
+																											isPt
+																												? "Erro ao excluir usuário"
+																												: "Error deleting user",
 																										);
 																									});
 																								return;
@@ -292,12 +326,16 @@ export const ShowUsers = () => {
 
 																						if (!error) {
 																							toast.success(
-																								"User unlinked successfully",
+																								isPt
+																									? "Usuário desvinculado com sucesso"
+																									: "User unlinked successfully",
 																							);
 																							refetch();
 																						} else {
 																							toast.error(
-																								"Error unlinking user",
+																								isPt
+																									? "Erro ao desvincular usuário"
+																									: "Error unlinking user",
 																							);
 																						}
 																					}}
@@ -306,7 +344,9 @@ export const ShowUsers = () => {
 																						className="w-full cursor-pointer text-red-500 hover:!text-red-600"
 																						onSelect={(e) => e.preventDefault()}
 																					>
-																						Unlink User
+																						{isPt
+																							? "Desvincular usuário"
+																							: "Unlink User"}
 																					</DropdownMenuItem>
 																				</DialogAction>
 																			)}
@@ -319,7 +359,9 @@ export const ShowUsers = () => {
 																		disabled
 																	>
 																		<span className="sr-only">
-																			No actions available
+																			{isPt
+																				? "Nenhuma ação disponível"
+																				: "No actions available"}
 																		</span>
 																		<MoreHorizontal className="h-4 w-4 text-muted-foreground" />
 																	</Button>

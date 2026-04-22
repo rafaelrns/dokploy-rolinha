@@ -32,6 +32,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { useUrl } from "@/utils/hooks/use-url";
 import { AddBitbucketProvider } from "./bitbucket/add-bitbucket-provider";
@@ -44,6 +45,8 @@ import { AddGitlabProvider } from "./gitlab/add-gitlab-provider";
 import { EditGitlabProvider } from "./gitlab/edit-gitlab-provider";
 
 export const ShowGitProviders = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data, isPending, refetch } = api.gitProvider.getAll.useQuery();
 	const { mutateAsync, isPending: isRemoving } =
 		api.gitProvider.remove.useMutation();
@@ -69,16 +72,18 @@ export const ShowGitProviders = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<GitBranch className="size-6 text-muted-foreground self-center" />
-							Git Providers
+							{isPt ? "Provedores Git" : "Git Providers"}
 						</CardTitle>
 						<CardDescription>
-							Connect your Git provider for authentication.
+							{isPt
+								? "Conecte seu provedor Git para autenticação."
+								: "Connect your Git provider for authentication."}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -87,7 +92,9 @@ export const ShowGitProviders = () => {
 									<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center">
 										<GitBranch className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground text-center">
-											Create your first Git Provider
+											{isPt
+												? "Crie seu primeiro provedor Git"
+												: "Create your first Git Provider"}
 										</span>
 										<div>
 											<div className="flex items-center bg-sidebar p-1 w-full rounded-lg">
@@ -104,7 +111,7 @@ export const ShowGitProviders = () => {
 									<div className="flex flex-col gap-4 min-h-[25vh]">
 										<div className="flex flex-col gap-2 rounded-lg ">
 											<span className="text-base font-medium">
-												Available Providers
+												{isPt ? "Provedores disponíveis" : "Available Providers"}
 											</span>
 											<div className="flex items-center bg-sidebar p-1 w-full rounded-lg">
 												<div className="flex flex-wrap items-center gap-4 p-3.5 rounded-lg bg-background border w-full [&>button]:grow">
@@ -170,7 +177,7 @@ export const ShowGitProviders = () => {
 																			className="text-xs"
 																		>
 																			<Users className="size-3 mr-1" />
-																			Shared
+																			{isPt ? "Compartilhado" : "Shared"}
 																		</Badge>
 																	)}
 																</div>
@@ -199,14 +206,20 @@ export const ShowGitProviders = () => {
 																								.then(() => {
 																									toast.success(
 																										checked
-																											? "Provider shared with organization"
-																											: "Provider unshared",
+																											? isPt
+																												? "Provedor compartilhado com a organização"
+																												: "Provider shared with organization"
+																											: isPt
+																												? "Compartilhamento do provedor removido"
+																												: "Provider unshared",
 																									);
 																									refetch();
 																								})
 																								.catch(() => {
 																									toast.error(
-																										"Error updating sharing",
+																										isPt
+																											? "Erro ao atualizar compartilhamento"
+																											: "Error updating sharing",
 																									);
 																								});
 																						}}
@@ -214,7 +227,9 @@ export const ShowGitProviders = () => {
 																				</div>
 																			</TooltipTrigger>
 																			<TooltipContent>
-																				Share with entire organization
+																				{isPt
+																					? "Compartilhar com toda a organização"
+																					: "Share with entire organization"}
 																			</TooltipContent>
 																		</Tooltip>
 																	</TooltipProvider>
@@ -223,7 +238,9 @@ export const ShowGitProviders = () => {
 																{isBitbucket &&
 																gitProvider.bitbucket?.appPassword &&
 																!gitProvider.bitbucket?.apiToken ? (
-																	<Badge variant="yellow">Deprecated</Badge>
+																	<Badge variant="yellow">
+																		{isPt ? "Obsoleto" : "Deprecated"}
+																	</Badge>
 																) : null}
 
 																{!haveGithubRequirements && isGithub && (
@@ -232,7 +249,7 @@ export const ShowGitProviders = () => {
 																			variant="outline"
 																			className="text-xs"
 																		>
-																			Action Required
+																			{isPt ? "Ação necessária" : "Action Required"}
 																		</Badge>
 																		<Link
 																			href={`${gitProvider?.github?.githubAppName}/installations/new?state=gh_setup:${gitProvider?.github.githubId}`}
@@ -265,7 +282,7 @@ export const ShowGitProviders = () => {
 																			variant="outline"
 																			className="text-xs"
 																		>
-																			Action Required
+																			{isPt ? "Ação necessária" : "Action Required"}
 																		</Badge>
 																		<Link
 																			href={getGitlabUrl(
@@ -313,11 +330,19 @@ export const ShowGitProviders = () => {
 																		)}
 
 																		<DialogAction
-																			title="Delete Git Provider"
+																			title={
+																				isPt
+																					? "Excluir provedor Git"
+																					: "Delete Git Provider"
+																			}
 																			description={
 																				gitProvider.sharedWithOrganization
-																					? "This provider is shared with the organization. Deleting it will remove access for all members. Are you sure?"
-																					: "Are you sure you want to delete this Git Provider?"
+																					? isPt
+																						? "Este provedor está compartilhado com a organização. Excluir removerá o acesso de todos os membros. Tem certeza?"
+																						: "This provider is shared with the organization. Deleting it will remove access for all members. Are you sure?"
+																					: isPt
+																						? "Tem certeza que deseja excluir este provedor Git?"
+																						: "Are you sure you want to delete this Git Provider?"
 																			}
 																			type="destructive"
 																			onClick={async () => {
@@ -327,13 +352,17 @@ export const ShowGitProviders = () => {
 																				})
 																					.then(() => {
 																						toast.success(
-																							"Git Provider deleted successfully",
+																							isPt
+																								? "Provedor Git excluído com sucesso"
+																								: "Git Provider deleted successfully",
 																						);
 																						refetch();
 																					})
 																					.catch(() => {
 																						toast.error(
-																							"Error deleting Git Provider",
+																							isPt
+																								? "Erro ao excluir provedor Git"
+																								: "Error deleting Git Provider",
 																						);
 																					});
 																			}}

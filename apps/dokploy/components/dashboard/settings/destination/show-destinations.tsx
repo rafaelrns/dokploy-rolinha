@@ -9,10 +9,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { HandleDestinations } from "./handle-destinations";
 
 export const ShowDestinations = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data, isPending, refetch } = api.destination.all.useQuery();
 	const { mutateAsync, isPending: isRemoving } =
 		api.destination.remove.useMutation();
@@ -24,17 +27,18 @@ export const ShowDestinations = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<Database className="size-6 text-muted-foreground self-center" />
-							S3 Destinations
+							{isPt ? "Destinos S3" : "S3 Destinations"}
 						</CardTitle>
 						<CardDescription>
-							Add your providers like AWS S3, Cloudflare R2, Wasabi,
-							DigitalOcean Spaces etc.
+							{isPt
+								? "Adicione provedores como AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces etc."
+								: "Add your providers like AWS S3, Cloudflare R2, Wasabi, DigitalOcean Spaces etc."}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -43,8 +47,9 @@ export const ShowDestinations = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<FolderUp className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground">
-											To create a backup it is required to set at least 1
-											provider.
+											{isPt
+												? "Para criar backup, é necessário configurar pelo menos 1 provedor."
+												: "To create a backup it is required to set at least 1 provider."}
 										</span>
 										{permissions?.destination.create && <HandleDestinations />}
 									</div>
@@ -62,7 +67,7 @@ export const ShowDestinations = () => {
 																{index + 1}. {destination.name}
 															</span>
 															<span className="text-xs text-muted-foreground">
-																Created at:{" "}
+																{isPt ? "Criado em: " : "Created at: "}
 																{new Date(
 																	destination.createdAt,
 																).toLocaleDateString()}
@@ -74,8 +79,14 @@ export const ShowDestinations = () => {
 															/>
 															{permissions?.destination.delete && (
 																<DialogAction
-																	title="Delete Destination"
-																	description="Are you sure you want to delete this destination?"
+																	title={
+																		isPt ? "Excluir destino" : "Delete Destination"
+																	}
+																	description={
+																		isPt
+																			? "Tem certeza que deseja excluir este destino?"
+																			: "Are you sure you want to delete this destination?"
+																	}
 																	type="destructive"
 																	onClick={async () => {
 																		await mutateAsync({
@@ -83,13 +94,17 @@ export const ShowDestinations = () => {
 																		})
 																			.then(() => {
 																				toast.success(
-																					"Destination deleted successfully",
+																					isPt
+																						? "Destino excluído com sucesso"
+																						: "Destination deleted successfully",
 																				);
 																				refetch();
 																			})
 																			.catch(() => {
 																				toast.error(
-																					"Error deleting destination",
+																					isPt
+																						? "Erro ao excluir destino"
+																						: "Error deleting destination",
 																				);
 																			});
 																	}}

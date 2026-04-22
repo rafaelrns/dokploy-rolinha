@@ -12,9 +12,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/utils/api";
+import { useI18n } from "@/lib/i18n";
 import { HandleAi } from "./handle-ai";
 
 export const AiForm = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data: aiConfigs, refetch, isPending } = api.ai.getAll.useQuery();
 	const { mutateAsync, isPending: isRemoving } = api.ai.delete.useMutation();
 
@@ -26,16 +29,20 @@ export const AiForm = () => {
 						<div>
 							<CardTitle className="text-xl flex flex-row gap-2">
 								<BotIcon className="size-6 text-muted-foreground self-center" />
-								AI Settings
+								{isPt ? "Configurações de IA" : "AI Settings"}
 							</CardTitle>
-							<CardDescription>Manage your AI configurations</CardDescription>
+							<CardDescription>
+								{isPt
+									? "Gerencie suas configurações de IA"
+									: "Manage your AI configurations"}
+							</CardDescription>
 						</div>
 						{aiConfigs && aiConfigs?.length > 0 && <HandleAi />}
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -44,7 +51,9 @@ export const AiForm = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<BotIcon className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground text-center">
-											You don't have any AI configurations
+											{isPt
+												? "Você não possui configurações de IA"
+												: "You don't have any AI configurations"}
 										</span>
 										<HandleAi />
 									</div>
@@ -65,19 +74,31 @@ export const AiForm = () => {
 													<div className="flex justify-between items-center">
 														<HandleAi aiId={config.aiId} />
 														<DialogAction
-															title="Delete AI"
-															description="Are you sure you want to delete this AI?"
+															title={isPt ? "Excluir IA" : "Delete AI"}
+															description={
+																isPt
+																	? "Tem certeza que deseja excluir esta IA?"
+																	: "Are you sure you want to delete this AI?"
+															}
 															type="destructive"
 															onClick={async () => {
 																await mutateAsync({
 																	aiId: config.aiId,
 																})
 																	.then(() => {
-																		toast.success("AI deleted successfully");
+																		toast.success(
+																			isPt
+																				? "IA excluída com sucesso"
+																				: "AI deleted successfully",
+																		);
 																		refetch();
 																	})
 																	.catch(() => {
-																		toast.error("Error deleting AI");
+																		toast.error(
+																			isPt
+																				? "Erro ao excluir IA"
+																				: "Error deleting AI",
+																		);
 																	});
 															}}
 														>

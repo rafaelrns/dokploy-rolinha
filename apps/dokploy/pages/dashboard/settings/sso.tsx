@@ -4,12 +4,16 @@ import type { GetServerSidePropsContext } from "next";
 import type { ReactElement } from "react";
 import superjson from "superjson";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
+import { useI18n } from "@/lib/i18n";
 import { EnterpriseFeatureGate } from "@/components/proprietary/enterprise-feature-gate";
 import { SSOSettings } from "@/components/proprietary/sso/sso-settings";
 import { Card } from "@/components/ui/card";
 import { appRouter } from "@/server/api/root";
 
 const Page = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
+
 	return (
 		<div className="w-full">
 			<div className="h-full rounded-xl max-w-5xl mx-auto flex flex-col gap-4">
@@ -18,10 +22,12 @@ const Page = () => {
 						<div className="p-6">
 							<EnterpriseFeatureGate
 								lockedProps={{
-									title: "Enterprise SSO",
+									title: isPt ? "SSO Enterprise" : "Enterprise SSO",
 									description:
-										"Single sign-on (SSO) with OIDC and SAML is part of Dokploy Enterprise. Add a valid license to configure it.",
-									ctaLabel: "Go to License",
+										isPt
+											? "Single sign-on (SSO) com OIDC e SAML faz parte do Dokploy Enterprise. Adicione uma licença válida para configurar."
+											: "Single sign-on (SSO) with OIDC and SAML is part of Dokploy Enterprise. Add a valid license to configure it.",
+									ctaLabel: isPt ? "Ir para Licença" : "Go to License",
 								}}
 							>
 								<SSOSettings />

@@ -20,6 +20,7 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { HandleCertificate } from "./handle-certificate";
 import {
@@ -30,6 +31,8 @@ import {
 } from "./utils";
 
 export const ShowCertificates = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { mutateAsync, isPending: isRemoving } =
 		api.certificates.remove.useMutation();
 	const { data, isPending, refetch } = api.certificates.all.useQuery();
@@ -43,23 +46,24 @@ export const ShowCertificates = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<ShieldCheck className="size-6 text-muted-foreground self-center" />
-							Certificates
+							{isPt ? "Certificados" : "Certificates"}
 						</CardTitle>
 						<CardDescription>
-							Create certificates in the Traefik directory
+							{isPt
+								? "Crie certificados no diretório do Traefik"
+								: "Create certificates in the Traefik directory"}
 						</CardDescription>
 
 						<AlertBlock type="warning">
-							Certificates are created in the Traefik directory. Traefik uses
-							these certificates to secure your applications. Using invalid
-							certificates can break your Traefik instance, preventing access to
-							your applications.
+							{isPt
+								? "Os certificados são criados no diretório do Traefik. O Traefik usa esses certificados para proteger suas aplicações. Certificados inválidos podem quebrar sua instância do Traefik e impedir acesso às aplicações."
+								: "Certificates are created in the Traefik directory. Traefik uses these certificates to secure your applications. Using invalid certificates can break your Traefik instance, preventing access to your applications."}
 						</AlertBlock>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -68,7 +72,9 @@ export const ShowCertificates = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<ShieldCheck className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground text-center">
-											You don't have any certificates created
+											{isPt
+												? "Você não possui certificados criados"
+												: "You don't have any certificates created"}
 										</span>
 										{permissions?.certificate.create && <HandleCertificate />}
 									</div>
@@ -126,7 +132,9 @@ export const ShowCertificates = () => {
 																		<Server className="size-3" />
 																		{certificate.server
 																			? `${certificate.server.name} (${certificate.server.ipAddress})`
-																			: "Dokploy (Local)"}
+																			: isPt
+																				? "Dokploy (Local)"
+																				: "Dokploy (Local)"}
 																	</span>
 																	{chainInfo.isChain && (
 																		<div className="flex flex-col gap-1.5 mt-1">
@@ -142,7 +150,9 @@ export const ShowCertificates = () => {
 																				)}
 																				<Link className="size-3 text-muted-foreground" />
 																				<span className="text-xs text-muted-foreground">
-																					Chain ({chainInfo.count} certificates)
+																					{isPt
+																						? `Cadeia (${chainInfo.count} certificados)`
+																						: `Chain (${chainInfo.count} certificates)`}
 																				</span>
 																			</button>
 																			{isExpanded && (
@@ -181,7 +191,9 @@ export const ShowCertificates = () => {
 																		{certificate.autoRenew &&
 																			expiration.status !== "valid" && (
 																				<span className="text-xs text-emerald-500 ml-1">
-																					(Auto-renewal enabled)
+																					{isPt
+																						? "(Renovação automática ativada)"
+																						: "(Auto-renewal enabled)"}
 																				</span>
 																			)}
 																	</div>
@@ -197,8 +209,16 @@ export const ShowCertificates = () => {
 
 																{permissions?.certificate.delete && (
 																	<DialogAction
-																		title="Delete Certificate"
-																		description="Are you sure you want to delete this certificate?"
+																		title={
+																			isPt
+																				? "Excluir certificado"
+																				: "Delete Certificate"
+																		}
+																		description={
+																			isPt
+																				? "Tem certeza que deseja excluir este certificado?"
+																				: "Are you sure you want to delete this certificate?"
+																		}
 																		type="destructive"
 																		onClick={async () => {
 																			await mutateAsync({
@@ -207,13 +227,17 @@ export const ShowCertificates = () => {
 																			})
 																				.then(() => {
 																					toast.success(
-																						"Certificate deleted successfully",
+																						isPt
+																							? "Certificado excluído com sucesso"
+																							: "Certificate deleted successfully",
 																					);
 																					refetch();
 																				})
 																				.catch(() => {
 																					toast.error(
-																						"Error deleting certificate",
+																						isPt
+																							? "Erro ao excluir certificado"
+																							: "Error deleting certificate",
 																					);
 																				});
 																		}}

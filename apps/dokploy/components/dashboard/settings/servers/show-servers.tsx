@@ -37,6 +37,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { ShowNodesModal } from "../cluster/nodes/show-nodes-modal";
 import { TerminalModal } from "../web-server/terminal-modal";
@@ -51,6 +52,8 @@ import { ShowTraefikFileSystemModal } from "./show-traefik-file-system-modal";
 import { WelcomeSubscription } from "./welcome-stripe/welcome-subscription";
 
 export const ShowServers = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const router = useRouter();
 	const query = router.query;
 	const { data, refetch, isPending } = api.server.all.useQuery();
@@ -69,10 +72,12 @@ export const ShowServers = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<ServerIcon className="size-6 text-muted-foreground self-center" />
-							Servers
+							{isPt ? "Servidores" : "Servers"}
 						</CardTitle>
 						<CardDescription>
-							Add servers to deploy your applications remotely.
+							{isPt
+								? "Adicione servidores para fazer deploy das suas aplicações remotamente."
+								: "Add servers to deploy your applications remotely."}
 						</CardDescription>
 
 						{isCloud && (
@@ -82,14 +87,14 @@ export const ShowServers = () => {
 									router.push("/dashboard/settings/servers?success=true");
 								}}
 							>
-								Reset Onboarding
+								{isPt ? "Reiniciar onboarding" : "Reset Onboarding"}
 							</span>
 						)}
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -98,12 +103,14 @@ export const ShowServers = () => {
 									<div className="flex flex-col items-center gap-3 min-h-[25vh] justify-center">
 										<KeyIcon className="size-8" />
 										<span className="text-base text-muted-foreground">
-											No SSH Keys found. Add a SSH Key to start adding servers.{" "}
+											{isPt
+												? "Nenhuma chave SSH encontrada. Adicione uma chave SSH para começar a adicionar servidores. "
+												: "No SSH Keys found. Add a SSH Key to start adding servers. "}
 											<Link
 												href="/dashboard/settings/ssh-keys"
 												className="text-primary"
 											>
-												Add SSH Key
+												{isPt ? "Adicionar chave SSH" : "Add SSH Key"}
 											</Link>
 										</span>
 									</div>
@@ -113,8 +120,9 @@ export const ShowServers = () => {
 											<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 												<ServerIcon className="size-8 self-center text-muted-foreground" />
 												<span className="text-base text-muted-foreground">
-													Start adding servers to deploy your applications
-													remotely.
+													{isPt
+														? "Comece adicionando servidores para fazer deploy das suas aplicações remotamente."
+														: "Start adding servers to deploy your applications remotely."}
 												</span>
 												{permissions?.server.create && <HandleServers />}
 											</div>
@@ -148,14 +156,14 @@ export const ShowServers = () => {
 																							className="h-8 w-8 p-0"
 																						>
 																							<span className="sr-only">
-																								More options
+																								{isPt ? "Mais opções" : "More options"}
 																							</span>
 																							<MoreHorizontal className="h-4 w-4" />
 																						</Button>
 																					</DropdownMenuTrigger>
 																					<DropdownMenuContent align="end">
 																						<DropdownMenuLabel>
-																							Advanced
+																							{isPt ? "Avançado" : "Advanced"}
 																						</DropdownMenuLabel>
 																						<ShowTraefikFileSystemModal
 																							serverId={server.serverId}
@@ -210,11 +218,9 @@ export const ShowServers = () => {
 																								side="bottom"
 																							>
 																								<p className="text-sm">
-																									This server is deactivated due
-																									to lack of payment. Please pay
-																									your invoice to reactivate it.
-																									If you think this is an error,
-																									please contact support.
+																									{isPt
+																										? "Este servidor está desativado por falta de pagamento. Pague sua fatura para reativá-lo. Se você acredita que isso é um erro, entre em contato com o suporte."
+																										: "This server is deactivated due to lack of payment. Please pay your invoice to reactivate it. If you think this is an error, please contact support."}
 																								</p>
 																							</TooltipContent>
 																						</Tooltip>
@@ -243,7 +249,7 @@ export const ShowServers = () => {
 																			{server.ipAddress}
 																		</Badge>
 																		<span className="text-muted-foreground">
-																			Port:
+																			{isPt ? "Porta:" : "Port:"}
 																		</span>
 																		<span className="font-medium">
 																			{server.port}
@@ -252,7 +258,7 @@ export const ShowServers = () => {
 																	<div className="flex items-center gap-2 text-sm">
 																		<User className="size-4 text-muted-foreground" />
 																		<span className="text-muted-foreground">
-																			User:
+																			{isPt ? "Usuário:" : "User:"}
 																		</span>
 																		<span className="font-medium">
 																			{server.username}
@@ -264,13 +270,19 @@ export const ShowServers = () => {
 																			SSH Key:
 																		</span>
 																		<span className="font-medium">
-																			{server.sshKeyId ? "Yes" : "No"}
+																			{server.sshKeyId
+																				? isPt
+																					? "Sim"
+																					: "Yes"
+																				: isPt
+																					? "Não"
+																					: "No"}
 																		</span>
 																	</div>
 																	<div className="flex items-center gap-2 text-sm pt-2 border-t">
 																		<Clock className="size-4 text-muted-foreground" />
 																		<span className="text-xs text-muted-foreground">
-																			Created{" "}
+																			{isPt ? "Criado " : "Created "}
 																			{format(
 																				new Date(server.createdAt),
 																				"PPp",
@@ -294,12 +306,12 @@ export const ShowServers = () => {
 																					>
 																						<div className="space-y-1">
 																							<p className="font-semibold">
-																								Setup Server
+																								{isPt ? "Configurar servidor" : "Setup Server"}
 																							</p>
 																							<p className="text-xs text-muted-foreground">
-																								Configure and initialize your
-																								server with Docker, Traefik, and
-																								other essential services
+																								{isPt
+																									? "Configure e inicialize seu servidor com Docker, Traefik e outros serviços essenciais"
+																									: "Configure and initialize your server with Docker, Traefik, and other essential services"}
 																							</p>
 																						</div>
 																					</TooltipContent>
@@ -326,7 +338,7 @@ export const ShowServers = () => {
 																							</div>
 																						</TooltipTrigger>
 																						<TooltipContent>
-																							<p>Terminal</p>
+																							<p>{isPt ? "Terminal" : "Terminal"}</p>
 																						</TooltipContent>
 																					</Tooltip>
 																				)}
@@ -341,7 +353,7 @@ export const ShowServers = () => {
 																						</div>
 																					</TooltipTrigger>
 																					<TooltipContent>
-																						<p>Edit Server</p>
+																						<p>{isPt ? "Editar servidor" : "Edit Server"}</p>
 																					</TooltipContent>
 																				</Tooltip>
 
@@ -356,7 +368,11 @@ export const ShowServers = () => {
 																							</div>
 																						</TooltipTrigger>
 																						<TooltipContent>
-																							<p>Web Server Actions</p>
+																							<p>
+																								{isPt
+																									? "Ações do servidor web"
+																									: "Web Server Actions"}
+																							</p>
 																						</TooltipContent>
 																					</Tooltip>
 																				)}
@@ -371,23 +387,27 @@ export const ShowServers = () => {
 																									disabled={!canDelete}
 																									title={
 																										canDelete
-																											? "Delete Server"
-																											: "Server has active services"
+																											? isPt
+																												? "Excluir servidor"
+																												: "Delete Server"
+																											: isPt
+																												? "Servidor possui serviços ativos"
+																												: "Server has active services"
 																									}
 																									description={
 																										canDelete ? (
-																											"This will delete the server and all associated data"
+																											isPt
+																												? "Isso excluirá o servidor e todos os dados associados"
+																												: "This will delete the server and all associated data"
 																										) : (
 																											<div className="flex flex-col gap-2">
-																												You can not delete this
-																												server because it has
-																												active services.
+																												{isPt
+																													? "Você não pode excluir este servidor porque ele possui serviços ativos."
+																													: "You can not delete this server because it has active services."}
 																												<AlertBlock type="warning">
-																													You have active
-																													services associated
-																													with this server,
-																													please delete them
-																													first.
+																													{isPt
+																														? "Existem serviços ativos associados a este servidor, exclua-os primeiro."
+																														: "You have active services associated with this server, please delete them first."}
 																												</AlertBlock>
 																											</div>
 																										)
@@ -399,7 +419,9 @@ export const ShowServers = () => {
 																											.then(() => {
 																												refetch();
 																												toast.success(
-																													`Server ${server.name} deleted successfully`,
+																													isPt
+																														? `Servidor ${server.name} excluído com sucesso`
+																														: `Server ${server.name} deleted successfully`,
 																												);
 																											})
 																											.catch((err) => {
@@ -422,8 +444,12 @@ export const ShowServers = () => {
 																						<TooltipContent>
 																							<p>
 																								{canDelete
-																									? "Delete Server"
-																									: "Cannot delete - has active services"}
+																									? isPt
+																										? "Excluir servidor"
+																										: "Delete Server"
+																									: isPt
+																										? "Não é possível excluir - há serviços ativos"
+																										: "Cannot delete - has active services"}
 																							</p>
 																						</TooltipContent>
 																					</Tooltip>

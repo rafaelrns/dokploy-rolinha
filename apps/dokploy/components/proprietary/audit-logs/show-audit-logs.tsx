@@ -1,6 +1,7 @@
 import { ClipboardList } from "lucide-react";
 import React from "react";
 import { EnterpriseFeatureGate } from "@/components/proprietary/enterprise-feature-gate";
+import { useI18n } from "@/lib/i18n";
 import {
 	Card,
 	CardContent,
@@ -9,10 +10,12 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { api } from "@/utils/api";
-import { columns } from "./columns";
+import { getAuditColumns } from "./columns";
 import { type AuditLogFilters, DataTable } from "./data-table";
 
 function AuditLogsContent() {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const [pageIndex, setPageIndex] = React.useState(0);
 	const [pageSize, setPageSize] = React.useState(50);
 	const [filters, setFilters] = React.useState<AuditLogFilters>({
@@ -67,7 +70,7 @@ function AuditLogsContent() {
 
 	return (
 		<DataTable
-			columns={columns}
+			columns={getAuditColumns(isPt)}
 			data={data?.logs ?? []}
 			total={data?.total ?? 0}
 			pageIndex={pageIndex}
@@ -82,24 +85,31 @@ function AuditLogsContent() {
 }
 
 export function ShowAuditLogs() {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
+
 	return (
 		<Card className="h-full bg-sidebar p-2.5 rounded-xl max-w-6xl w-full mx-auto">
 			<div className="rounded-xl bg-background shadow-md ">
 				<EnterpriseFeatureGate
 					lockedProps={{
-						title: "Audit Logs",
+						title: isPt ? "Logs de auditoria" : "Audit Logs",
 						description:
-							"Get full visibility into every action performed across your organization. Audit logs are available as part of Dokploy Enterprise.",
-						ctaLabel: "Manage License",
+							isPt
+								? "Tenha visibilidade completa de cada ação executada na organização. Logs de auditoria fazem parte do Dokploy Enterprise."
+								: "Get full visibility into every action performed across your organization. Audit logs are available as part of Dokploy Enterprise.",
+						ctaLabel: isPt ? "Gerenciar licença" : "Manage License",
 					}}
 				>
 					<CardHeader>
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<ClipboardList className="h-5 w-5 text-muted-foreground self-center" />
-							Audit Logs
+							{isPt ? "Logs de auditoria" : "Audit Logs"}
 						</CardTitle>
 						<CardDescription>
-							Track all actions performed by members in your organization.
+							{isPt
+								? "Acompanhe todas as ações realizadas por membros da sua organização."
+								: "Track all actions performed by members in your organization."}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">

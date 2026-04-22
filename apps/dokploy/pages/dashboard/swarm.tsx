@@ -6,18 +6,22 @@ import type { ReactElement } from "react";
 import superjson from "superjson";
 import SwarmMonitorCard from "@/components/dashboard/swarm/monitoring-card";
 import { ShowSwarmContainers } from "@/components/dashboard/swarm/containers/show-swarm-containers";
+import { useI18n } from "@/lib/i18n";
 import { DashboardLayout } from "@/components/layouts/dashboard-layout";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { appRouter } from "@/server/api/root";
 
 const Dashboard = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
+
 	return (
 		<div className="space-y-4">
 			<Tabs defaultValue="overview">
 				<TabsList>
-					<TabsTrigger value="overview">Overview</TabsTrigger>
-					<TabsTrigger value="containers">Containers</TabsTrigger>
+					<TabsTrigger value="overview">{isPt ? "Visão geral" : "Overview"}</TabsTrigger>
+					<TabsTrigger value="containers">{isPt ? "Contêineres" : "Containers"}</TabsTrigger>
 				</TabsList>
 				<TabsContent value="overview">
 					<SwarmMonitorCard />

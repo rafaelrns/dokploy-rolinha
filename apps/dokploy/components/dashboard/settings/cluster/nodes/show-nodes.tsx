@@ -39,6 +39,7 @@ import {
 	TooltipProvider,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { AddNode } from "./add-node";
 import { ShowNodeData } from "./show-node-data";
@@ -48,6 +49,8 @@ interface Props {
 }
 
 export const ShowNodes = ({ serverId }: Props) => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data, isPending, refetch } = api.cluster.getNodes.useQuery({
 		serverId,
 	});
@@ -64,9 +67,11 @@ export const ShowNodes = ({ serverId }: Props) => {
 						<div className="flex flex-col gap-2">
 							<CardTitle className="text-xl flex flex-row gap-2">
 								<Boxes className="size-6 text-muted-foreground self-center" />
-								Cluster
+								{isPt ? "Cluster" : "Cluster"}
 							</CardTitle>
-							<CardDescription>Add nodes to your cluster</CardDescription>
+							<CardDescription>
+								{isPt ? "Adicione nós ao seu cluster" : "Add nodes to your cluster"}
+							</CardDescription>
 						</div>
 						{haveAtLeastOneRegistry && (
 							<div className="flex flex-row gap-2">
@@ -83,20 +88,34 @@ export const ShowNodes = ({ serverId }: Props) => {
 							<div className="grid md:grid-cols-1 gap-4">
 								<Table>
 									<TableCaption>
-										A list of your managers / workers.
+										{isPt
+											? "Uma lista dos seus nós manager / worker."
+											: "A list of your managers / workers."}
 									</TableCaption>
 									<TableHeader>
 										<TableRow>
-											<TableHead className="text-left">Hostname</TableHead>
-											<TableHead className="text-right">Status</TableHead>
-											<TableHead className="text-right">Role</TableHead>
-											<TableHead className="text-right">Availability</TableHead>
-											<TableHead className="text-right">
-												Engine Version
+											<TableHead className="text-left">
+												{isPt ? "Hostname" : "Hostname"}
 											</TableHead>
-											<TableHead className="text-right">Created</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Status" : "Status"}
+											</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Perfil" : "Role"}
+											</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Disponibilidade" : "Availability"}
+											</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Versão do engine" : "Engine Version"}
+											</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Criado" : "Created"}
+											</TableHead>
 
-											<TableHead className="text-right">Actions</TableHead>
+											<TableHead className="text-right">
+												{isPt ? "Ações" : "Actions"}
+											</TableHead>
 										</TableRow>
 									</TableHeader>
 									<TableBody>
@@ -130,24 +149,32 @@ export const ShowNodes = ({ serverId }: Props) => {
 															date={node.CreatedAt}
 															className="text-sm"
 														>
-															Created{" "}
+															{isPt ? "Criado " : "Created "}
 														</DateTooltip>
 													</TableCell>
 													<TableCell className="text-right flex justify-end">
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
 																<Button variant="ghost" className="h-8 w-8 p-0">
-																	<span className="sr-only">Open menu</span>
+																	<span className="sr-only">
+																		{isPt ? "Abrir menu" : "Open menu"}
+																	</span>
 																	<MoreHorizontal className="h-4 w-4" />
 																</Button>
 															</DropdownMenuTrigger>
 															<DropdownMenuContent align="end">
-																<DropdownMenuLabel>Actions</DropdownMenuLabel>
+																<DropdownMenuLabel>
+																	{isPt ? "Ações" : "Actions"}
+																</DropdownMenuLabel>
 																<ShowNodeData data={node} />
 																{!node?.ManagerStatus?.Leader && (
 																	<DialogAction
-																		title="Delete Node"
-																		description="Are you sure you want to delete this node from the cluster?"
+																		title={isPt ? "Excluir nó" : "Delete Node"}
+																		description={
+																			isPt
+																				? "Tem certeza que deseja excluir este nó do cluster?"
+																				: "Are you sure you want to delete this node from the cluster?"
+																		}
 																		type="destructive"
 																		onClick={async () => {
 																			await deleteNode({
@@ -157,18 +184,24 @@ export const ShowNodes = ({ serverId }: Props) => {
 																				.then(() => {
 																					refetch();
 																					toast.success(
-																						"Node deleted successfully",
+																						isPt
+																							? "Nó excluído com sucesso"
+																							: "Node deleted successfully",
 																					);
 																				})
 																				.catch(() => {
-																					toast.error("Error deleting node");
+																					toast.error(
+																						isPt
+																							? "Erro ao excluir nó"
+																							: "Error deleting node",
+																					);
 																				});
 																		}}
 																	>
 																		<DropdownMenuItem
 																			onSelect={(e) => e.preventDefault()}
 																		>
-																			Delete
+																			{isPt ? "Excluir" : "Delete"}
 																		</DropdownMenuItem>
 																	</DialogAction>
 																)}
@@ -186,8 +219,9 @@ export const ShowNodes = ({ serverId }: Props) => {
 								<LockIcon className="size-8 text-muted-foreground" />
 								<div className="flex flex-row gap-2">
 									<span className="text-base text-muted-foreground ">
-										To add nodes to your cluster, you need to configure at least
-										one registry.
+										{isPt
+											? "Para adicionar nós ao cluster, você precisa configurar ao menos um registro."
+											: "To add nodes to your cluster, you need to configure at least one registry."}
 									</span>
 									<TooltipProvider delayDuration={0}>
 										<Tooltip>
@@ -195,7 +229,9 @@ export const ShowNodes = ({ serverId }: Props) => {
 												<HelpCircle className="size-5 text-muted-foreground " />
 											</TooltipTrigger>
 											<TooltipContent>
-												Nodes need a registry to pull images from.
+												{isPt
+													? "Os nós precisam de um registro para baixar imagens."
+													: "Nodes need a registry to pull images from."}
 											</TooltipContent>
 										</Tooltip>
 									</TooltipProvider>
@@ -203,8 +239,10 @@ export const ShowNodes = ({ serverId }: Props) => {
 
 								<ul className="list-disc list-inside text-sm text-muted-foreground border p-4 rounded-lg flex flex-col gap-1.5 mt-2.5">
 									<li>
-										<strong>Docker Registry:</strong> Use custom registries like
-										Docker Hub, DigitalOcean Registry, etc.
+										<strong>Docker Registry:</strong>{" "}
+										{isPt
+											? "Use registros customizados como Docker Hub, DigitalOcean Registry, etc."
+											: "Use custom registries like Docker Hub, DigitalOcean Registry, etc."}
 									</li>
 								</ul>
 							</div>

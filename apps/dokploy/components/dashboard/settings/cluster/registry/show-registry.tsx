@@ -9,10 +9,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { HandleRegistry } from "./handle-registry";
 
 export const ShowRegistry = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { mutateAsync, isPending: isRemoving } =
 		api.registry.remove.useMutation();
 	const { data, isPending, refetch } = api.registry.all.useQuery();
@@ -25,16 +28,18 @@ export const ShowRegistry = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<Package className="size-6 text-muted-foreground self-center" />
-							Docker Registry
+							{isPt ? "Registro Docker" : "Docker Registry"}
 						</CardTitle>
 						<CardDescription>
-							Manage your Docker Registry configurations
+							{isPt
+								? "Gerencie suas configurações de registro Docker"
+								: "Manage your Docker Registry configurations"}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -43,7 +48,9 @@ export const ShowRegistry = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<Package className="size-8 self-center text-muted-foreground" />
 										<span className="text-base text-muted-foreground text-center">
-											You don't have any registry configurations
+											{isPt
+												? "Você não possui configurações de registro"
+												: "You don't have any registry configurations"}
 										</span>
 										{permissions?.registry.create && <HandleRegistry />}
 									</div>
@@ -76,8 +83,14 @@ export const ShowRegistry = () => {
 
 															{permissions?.registry.delete && (
 																<DialogAction
-																	title="Delete Registry"
-																	description="Are you sure you want to delete this registry configuration?"
+																	title={
+																		isPt ? "Excluir registro" : "Delete Registry"
+																	}
+																	description={
+																		isPt
+																			? "Tem certeza que deseja excluir esta configuração de registro?"
+																			: "Are you sure you want to delete this registry configuration?"
+																	}
 																	type="destructive"
 																	onClick={async () => {
 																		await mutateAsync({
@@ -85,13 +98,17 @@ export const ShowRegistry = () => {
 																		})
 																			.then(() => {
 																				toast.success(
-																					"Registry configuration deleted successfully",
+																					isPt
+																						? "Configuração de registro excluída com sucesso"
+																						: "Registry configuration deleted successfully",
 																				);
 																				refetch();
 																			})
 																			.catch(() => {
 																				toast.error(
-																					"Error deleting registry configuration",
+																					isPt
+																						? "Erro ao excluir configuração de registro"
+																						: "Error deleting registry configuration",
 																				);
 																			});
 																	}}

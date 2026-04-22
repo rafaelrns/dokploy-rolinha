@@ -43,6 +43,7 @@ import {
 	TableHeader,
 	TableRow,
 } from "@/components/ui/table";
+import { useI18n } from "@/lib/i18n";
 
 const ACTION_OPTIONS = [
 	{ value: "create", label: "Created" },
@@ -137,11 +138,54 @@ export function DataTable({
 	onFilterChange,
 	isLoading,
 }: DataTableProps) {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const [sorting, setSorting] = React.useState<SortingState>([
 		{ id: "createdAt", desc: true },
 	]);
 	const [columnVisibility, setColumnVisibility] =
 		React.useState<VisibilityState>({});
+
+	const getActionLabel = (value: AuditAction) => {
+		if (!isPt) {
+			return ACTION_OPTIONS.find((opt) => opt.value === value)?.label ?? value;
+		}
+		const labels: Record<AuditAction, string> = {
+			create: "Criado",
+			update: "Atualizado",
+			delete: "Excluído",
+			deploy: "Deploy realizado",
+			cancel: "Cancelado",
+			redeploy: "Redeploy realizado",
+			login: "Login",
+			logout: "Logout",
+		};
+		return labels[value];
+	};
+
+	const getResourceLabel = (value: AuditResourceType) => {
+		if (!isPt) {
+			return RESOURCE_OPTIONS.find((opt) => opt.value === value)?.label ?? value;
+		}
+		const labels: Record<AuditResourceType, string> = {
+			project: "Projetos",
+			service: "Aplicações / Serviços",
+			environment: "Ambientes",
+			deployment: "Deployments",
+			user: "Usuários",
+			customRole: "Papéis customizados",
+			domain: "Domínios",
+			certificate: "Certificados",
+			registry: "Registros",
+			server: "Servidores remotos",
+			sshKey: "Chaves SSH",
+			gitProvider: "Provedores Git",
+			notification: "Notificações",
+			settings: "Configurações",
+			session: "Sessões (Login/Logout)",
+		};
+		return labels[value];
+	};
 
 	const table = useReactTable({
 		data,
@@ -171,13 +215,13 @@ export function DataTable({
 		<div className="flex flex-col gap-4 w-full">
 			<div className="flex items-center gap-2 flex-wrap">
 				<Input
-					placeholder="Filter by user..."
+					placeholder={isPt ? "Filtrar por usuário..." : "Filter by user..."}
 					value={filters.userEmail}
 					onChange={(e) => onFilterChange("userEmail", e.target.value)}
 					className="max-w-xs"
 				/>
 				<Input
-					placeholder="Filter by name..."
+					placeholder={isPt ? "Filtrar por nome..." : "Filter by name..."}
 					value={filters.resourceName}
 					onChange={(e) => onFilterChange("resourceName", e.target.value)}
 					className="max-w-xs"
@@ -192,13 +236,15 @@ export function DataTable({
 					}
 				>
 					<SelectTrigger className="w-[160px]">
-						<SelectValue placeholder="All actions" />
+						<SelectValue placeholder={isPt ? "Todas as ações" : "All actions"} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="__all__">All actions</SelectItem>
+						<SelectItem value="__all__">
+							{isPt ? "Todas as ações" : "All actions"}
+						</SelectItem>
 						{ACTION_OPTIONS.map((opt) => (
 							<SelectItem key={opt.value} value={opt.value}>
-								{opt.label}
+								{getActionLabel(opt.value as AuditAction)}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -213,13 +259,15 @@ export function DataTable({
 					}
 				>
 					<SelectTrigger className="w-[200px]">
-						<SelectValue placeholder="All resources" />
+						<SelectValue placeholder={isPt ? "Todos os recursos" : "All resources"} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="__all__">All resources</SelectItem>
+						<SelectItem value="__all__">
+							{isPt ? "Todos os recursos" : "All resources"}
+						</SelectItem>
 						{RESOURCE_OPTIONS.map((opt) => (
 							<SelectItem key={opt.value} value={opt.value}>
-								{opt.label}
+								{getResourceLabel(opt.value as AuditResourceType)}
 							</SelectItem>
 						))}
 					</SelectContent>
@@ -239,7 +287,9 @@ export function DataTable({
 									format(filters.dateRange.from, "MMM d, yyyy")
 								)
 							) : (
-								<span className="text-muted-foreground">Date range</span>
+								<span className="text-muted-foreground">
+									{isPt ? "Intervalo de datas" : "Date range"}
+								</span>
 							)}
 						</Button>
 					</PopoverTrigger>
@@ -267,13 +317,13 @@ export function DataTable({
 						className="text-muted-foreground"
 					>
 						<X className="h-4 w-4 mr-1" />
-						Clear
+						{isPt ? "Limpar" : "Clear"}
 					</Button>
 				)}
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" className="ml-auto">
-							Columns <ChevronDown className="ml-2 h-4 w-4" />
+							{isPt ? "Colunas" : "Columns"} <ChevronDown className="ml-2 h-4 w-4" />
 						</Button>
 					</DropdownMenuTrigger>
 					<DropdownMenuContent align="end">
@@ -319,7 +369,7 @@ export function DataTable({
 									colSpan={columns.length}
 									className="h-24 text-center text-muted-foreground"
 								>
-									Loading...
+									{isPt ? "Carregando..." : "Loading..."}
 								</TableCell>
 							</TableRow>
 						) : table.getRowModel().rows.length ? (
@@ -341,7 +391,7 @@ export function DataTable({
 									colSpan={columns.length}
 									className="h-24 text-center text-muted-foreground"
 								>
-									No audit logs found.
+									{isPt ? "Nenhum log de auditoria encontrado." : "No audit logs found."}
 								</TableCell>
 							</TableRow>
 						)}
@@ -351,11 +401,14 @@ export function DataTable({
 
 			<div className="flex items-center justify-between text-sm text-muted-foreground">
 				<span>
-					{total} {total === 1 ? "entry" : "entries"} total
+					{total} {total === 1 ? (isPt ? "registro" : "entry") : isPt ? "registros" : "entries"}{" "}
+					{isPt ? "no total" : "total"}
 				</span>
 				<div className="flex items-center gap-3">
 					<div className="flex items-center gap-2">
-						<span className="text-sm whitespace-nowrap">Rows per page</span>
+						<span className="text-sm whitespace-nowrap">
+							{isPt ? "Linhas por página" : "Rows per page"}
+						</span>
 						<Select
 							value={String(pageSize)}
 							onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -373,7 +426,8 @@ export function DataTable({
 						</Select>
 					</div>
 					<span className="whitespace-nowrap">
-						Page {pageIndex + 1} of {Math.max(1, pageCount)}
+						{isPt ? "Página" : "Page"} {pageIndex + 1} {isPt ? "de" : "of"}{" "}
+						{Math.max(1, pageCount)}
 					</span>
 					<div className="flex gap-2">
 						<Button
@@ -382,7 +436,7 @@ export function DataTable({
 							onClick={() => onPageChange(pageIndex - 1)}
 							disabled={pageIndex === 0}
 						>
-							Previous
+							{isPt ? "Anterior" : "Previous"}
 						</Button>
 						<Button
 							variant="outline"
@@ -390,7 +444,7 @@ export function DataTable({
 							onClick={() => onPageChange(pageIndex + 1)}
 							disabled={pageIndex + 1 >= pageCount}
 						>
-							Next
+							{isPt ? "Próximo" : "Next"}
 						</Button>
 					</div>
 				</div>

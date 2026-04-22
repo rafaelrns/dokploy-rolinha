@@ -20,10 +20,13 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { HandleNotifications } from "./handle-notifications";
 
 export const ShowNotifications = () => {
+	const { locale } = useI18n();
+	const isPt = locale === "pt-BR";
 	const { data, isPending, refetch } = api.notification.all.useQuery();
 	const { mutateAsync, isPending: isRemoving } =
 		api.notification.remove.useMutation();
@@ -36,17 +39,18 @@ export const ShowNotifications = () => {
 					<CardHeader className="">
 						<CardTitle className="text-xl flex flex-row gap-2">
 							<Bell className="size-6 text-muted-foreground self-center" />
-							Notifications
+							{isPt ? "Notificações" : "Notifications"}
 						</CardTitle>
 						<CardDescription>
-							Add your providers to receive notifications, like Discord, Slack,
-							Telegram, Teams, Email, Resend, Lark.
+							{isPt
+								? "Adicione provedores para receber notificações, como Discord, Slack, Telegram, Teams, Email, Resend e Lark."
+								: "Add your providers to receive notifications, like Discord, Slack, Telegram, Teams, Email, Resend, Lark."}
 						</CardDescription>
 					</CardHeader>
 					<CardContent className="space-y-2 py-8 border-t">
 						{isPending ? (
 							<div className="flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground min-h-[25vh]">
-								<span>Loading...</span>
+								<span>{isPt ? "Carregando..." : "Loading..."}</span>
 								<Loader2 className="animate-spin size-4" />
 							</div>
 						) : (
@@ -55,8 +59,9 @@ export const ShowNotifications = () => {
 									<div className="flex flex-col items-center gap-3  min-h-[25vh] justify-center">
 										<Bell />
 										<span className="text-base text-muted-foreground text-center">
-											To send notifications it is required to set at least 1
-											provider.
+											{isPt
+												? "Para enviar notificações, é necessário configurar pelo menos 1 provedor."
+												: "To send notifications it is required to set at least 1 provider."}
 										</span>
 										{permissions?.notification.create && (
 											<HandleNotifications />
@@ -138,8 +143,16 @@ export const ShowNotifications = () => {
 
 															{permissions?.notification.delete && (
 																<DialogAction
-																	title="Delete Notification"
-																	description="Are you sure you want to delete this notification?"
+																	title={
+																		isPt
+																			? "Excluir notificação"
+																			: "Delete Notification"
+																	}
+																	description={
+																		isPt
+																			? "Tem certeza que deseja excluir esta notificação?"
+																			: "Are you sure you want to delete this notification?"
+																	}
 																	type="destructive"
 																	onClick={async () => {
 																		await mutateAsync({
@@ -148,13 +161,17 @@ export const ShowNotifications = () => {
 																		})
 																			.then(() => {
 																				toast.success(
-																					"Notification deleted successfully",
+																					isPt
+																						? "Notificação excluída com sucesso"
+																						: "Notification deleted successfully",
 																				);
 																				refetch();
 																			})
 																			.catch(() => {
 																				toast.error(
-																					"Error deleting notification",
+																					isPt
+																						? "Erro ao excluir notificação"
+																						: "Error deleting notification",
 																				);
 																			});
 																	}}
