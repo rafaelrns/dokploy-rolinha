@@ -54,6 +54,7 @@ const redirectToDashboard = () => {
 	// Force a full navigation so SSR pages read the fresh auth cookie.
 	window.location.assign("/dashboard/home");
 };
+const LOGIN_REDIRECT_FALLBACK_MS = 3000;
 
 interface Props {
 	IS_CLOUD: boolean;
@@ -98,11 +99,21 @@ export default function Home({ IS_CLOUD }: Props) {
 
 	const onSubmit = async (values: LoginForm) => {
 		setIsLoginLoading(true);
+		let fallbackRedirectTimer: ReturnType<typeof setTimeout> | null = setTimeout(
+			() => {
+				redirectToDashboard();
+			},
+			LOGIN_REDIRECT_FALLBACK_MS,
+		);
 		try {
 			const { data, error } = await authClient.signIn.email({
 				email: values.email,
 				password: values.password,
 			});
+			if (fallbackRedirectTimer) {
+				clearTimeout(fallbackRedirectTimer);
+				fallbackRedirectTimer = null;
+			}
 
 			if (error) {
 				const isEmailNotVerified =
@@ -131,8 +142,15 @@ export default function Home({ IS_CLOUD }: Props) {
 			toast.success(t("login.success"));
 			await waitForSessionAndRedirect();
 		} catch {
+			if (fallbackRedirectTimer) {
+				clearTimeout(fallbackRedirectTimer);
+				fallbackRedirectTimer = null;
+			}
 			toast.error(t("login.errorGeneric"));
 		} finally {
+			if (fallbackRedirectTimer) {
+				clearTimeout(fallbackRedirectTimer);
+			}
 			setIsLoginLoading(false);
 		}
 	};
