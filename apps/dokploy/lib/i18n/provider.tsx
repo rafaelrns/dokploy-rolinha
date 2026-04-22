@@ -70,11 +70,20 @@ type I18nContextState = {
 const I18nContext = createContext<I18nContextState | null>(null);
 
 export const LocaleProvider = ({ children }: { children: React.ReactNode }) => {
-	const [locale, setLocaleState] = useState<AppLocale>(resolveInitialLocale);
+	const [locale, setLocaleState] = useState<AppLocale>(DEFAULT_LOCALE);
+	const [isHydrated, setIsHydrated] = useState(false);
 
 	useEffect(() => {
+		setLocaleState(resolveInitialLocale());
+		setIsHydrated(true);
+	}, []);
+
+	useEffect(() => {
+		if (!isHydrated) {
+			return;
+		}
 		document.cookie = `${LOCALE_COOKIE_NAME}=${locale}; path=/; max-age=${60 * 60 * 24 * 365}; samesite=lax`;
-	}, [locale]);
+	}, [locale, isHydrated]);
 
 	const setLocale = useCallback((nextLocale: AppLocale) => {
 		setLocaleState(nextLocale);

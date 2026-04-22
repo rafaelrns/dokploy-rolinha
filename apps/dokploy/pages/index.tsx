@@ -55,6 +55,8 @@ const redirectToDashboard = () => {
 	window.location.assign("/dashboard/home");
 };
 
+const AUTH_WATCHDOG_FORCE_REDIRECT_MS = 4000;
+
 interface Props {
 	IS_CLOUD: boolean;
 }
@@ -86,12 +88,22 @@ export default function Home({ IS_CLOUD }: Props) {
 		let cancelled = false;
 		let attempts = 0;
 		const maxAttempts = 16;
+		let forceRedirectTimer: ReturnType<typeof setTimeout> | null = setTimeout(
+			() => {
+				redirectToDashboard();
+			},
+			AUTH_WATCHDOG_FORCE_REDIRECT_MS,
+		);
 
 		const checkSession = async () => {
 			if (cancelled) return;
 			try {
 				const session = await authClient.getSession();
 				if (session?.data?.session) {
+					if (forceRedirectTimer) {
+						clearTimeout(forceRedirectTimer);
+						forceRedirectTimer = null;
+					}
 					redirectToDashboard();
 					return;
 				}
@@ -114,6 +126,9 @@ export default function Home({ IS_CLOUD }: Props) {
 		void checkSession();
 		return () => {
 			cancelled = true;
+			if (forceRedirectTimer) {
+				clearTimeout(forceRedirectTimer);
+			}
 		};
 	}, [isLoginLoading, isTwoFactorLoading, isBackupCodeLoading]);
 
