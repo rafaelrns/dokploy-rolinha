@@ -4,7 +4,6 @@ import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/stand
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -50,11 +49,15 @@ const _TwoFactorSchema = z.object({
 
 type LoginForm = z.infer<typeof LoginSchema>;
 
+const redirectToDashboard = () => {
+	// Force a full navigation so SSR pages read the fresh auth cookie.
+	window.location.assign("/dashboard/home");
+};
+
 interface Props {
 	IS_CLOUD: boolean;
 }
 export default function Home({ IS_CLOUD }: Props) {
-	const router = useRouter();
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const { data: showSignInWithSSO } = api.sso.showSignInWithSSO.useQuery();
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -106,7 +109,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			redirectToDashboard();
 		} catch {
 			toast.error("An error occurred while logging in");
 		} finally {
@@ -133,7 +136,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			redirectToDashboard();
 		} catch {
 			toast.error("An error occurred while verifying 2FA code");
 		} finally {
@@ -163,7 +166,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success("Logged in successfully");
-			router.push("/dashboard/home");
+			redirectToDashboard();
 		} catch {
 			toast.error("An error occurred while verifying backup code");
 		} finally {
