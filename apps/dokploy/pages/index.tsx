@@ -4,7 +4,7 @@ import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/stand
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { type ReactElement, useState } from "react";
+import { type ReactElement, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -35,6 +35,7 @@ import { Input } from "@/components/ui/input";
 import { InputOTP } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 import { useWhitelabelingPublic } from "@/utils/hooks/use-whitelabeling";
 
@@ -58,6 +59,7 @@ interface Props {
 	IS_CLOUD: boolean;
 }
 export default function Home({ IS_CLOUD }: Props) {
+	const { t } = useI18n();
 	const { config: whitelabeling } = useWhitelabelingPublic();
 	const { data: showSignInWithSSO } = api.sso.showSignInWithSSO.useQuery();
 	const [isLoginLoading, setIsLoginLoading] = useState(false);
@@ -76,6 +78,45 @@ export default function Home({ IS_CLOUD }: Props) {
 		},
 	});
 
+	useEffect(() => {
+		if (!isLoginLoading && !isTwoFactorLoading && !isBackupCodeLoading) {
+			return;
+		}
+
+		let cancelled = false;
+		let attempts = 0;
+		const maxAttempts = 16;
+
+		const checkSession = async () => {
+			if (cancelled) return;
+			try {
+				const session = await authClient.getSession();
+				if (session?.data?.session) {
+					redirectToDashboard();
+					return;
+				}
+			} catch {
+				// Ignore transient session-check failures and keep polling.
+			}
+
+			attempts += 1;
+			if (attempts >= maxAttempts) {
+				if (!cancelled) {
+					setIsLoginLoading(false);
+					setIsTwoFactorLoading(false);
+					setIsBackupCodeLoading(false);
+				}
+				return;
+			}
+			setTimeout(checkSession, 500);
+		};
+
+		void checkSession();
+		return () => {
+			cancelled = true;
+		};
+	}, [isLoginLoading, isTwoFactorLoading, isBackupCodeLoading]);
+
 	const onSubmit = async (values: LoginForm) => {
 		setIsLoginLoading(true);
 		try {
@@ -90,13 +131,13 @@ export default function Home({ IS_CLOUD }: Props) {
 					error.message?.toLowerCase().includes("email not verified");
 				if (isEmailNotVerified) {
 					const msg =
-						"Your email is not verified. We've sent a new verification link to your email.";
+						t("login.emailNotVerified");
 					toast.info(msg);
 					setError(msg);
 					return;
 				}
 				toast.error(error.message);
-				setError(error.message || "An error occurred while logging in");
+				setError(error.message || t("login.errorGeneric"));
 				return;
 			}
 
@@ -104,14 +145,14 @@ export default function Home({ IS_CLOUD }: Props) {
 			if (data?.twoFactorRedirect as boolean) {
 				setTwoFactorCode("");
 				setIsTwoFactor(true);
-				toast.info("Please enter your 2FA code");
+				toast.info(t("login.enter2faCode"));
 				return;
 			}
 
-			toast.success("Logged in successfully");
+			toast.success(t("login.success"));
 			redirectToDashboard();
 		} catch {
-			toast.error("An error occurred while logging in");
+			toast.error(t("login.errorGeneric"));
 		} finally {
 			setIsLoginLoading(false);
 		}
@@ -119,7 +160,7 @@ export default function Home({ IS_CLOUD }: Props) {
 	const onTwoFactorSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (twoFactorCode.length !== 6) {
-			toast.error("Please enter a valid 6-digit code");
+			toast.error(t("login.enterValid2fa"));
 			return;
 		}
 
@@ -131,14 +172,14 @@ export default function Home({ IS_CLOUD }: Props) {
 
 			if (error) {
 				toast.error(error.message);
-				setError(error.message || "An error occurred while verifying 2FA code");
+				setError(error.message || t("login.error2fa"));
 				return;
 			}
 
-			toast.success("Logged in successfully");
+			toast.success(t("login.success"));
 			redirectToDashboard();
 		} catch {
-			toast.error("An error occurred while verifying 2FA code");
+			toast.error(t("login.error2fa"));
 		} finally {
 			setIsTwoFactorLoading(false);
 		}
@@ -147,7 +188,7 @@ export default function Home({ IS_CLOUD }: Props) {
 	const onBackupCodeSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (backupCode.length < 8) {
-			toast.error("Please enter a valid backup code");
+			toast.error(t("login.enterValidBackupCode"));
 			return;
 		}
 
@@ -159,16 +200,14 @@ export default function Home({ IS_CLOUD }: Props) {
 
 			if (error) {
 				toast.error(error.message);
-				setError(
-					error.message || "An error occurred while verifying backup code",
-				);
+				setError(error.message || t("login.errorBackup"));
 				return;
 			}
 
-			toast.success("Logged in successfully");
+			toast.success(t("login.success"));
 			redirectToDashboard();
 		} catch {
-			toast.error("An error occurred while verifying backup code");
+			toast.error(t("login.errorBackup"));
 		} finally {
 			setIsBackupCodeLoading(false);
 		}
@@ -189,9 +228,9 @@ export default function Home({ IS_CLOUD }: Props) {
 						name="email"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Email</FormLabel>
+								<FormLabel>{t("login.emailLabel")}</FormLabel>
 								<FormControl>
-									<Input placeholder="john@example.com" {...field} />
+									<Input placeholder={t("login.emailPlaceholder")} {...field} />
 								</FormControl>
 								<FormMessage />
 							</FormItem>
@@ -202,11 +241,11 @@ export default function Home({ IS_CLOUD }: Props) {
 						name="password"
 						render={({ field }) => (
 							<FormItem>
-								<FormLabel>Password</FormLabel>
+								<FormLabel>{t("login.passwordLabel")}</FormLabel>
 								<FormControl>
 									<Input
 										type="password"
-										placeholder="Enter your password"
+										placeholder={t("login.passwordPlaceholder")}
 										{...field}
 									/>
 								</FormControl>
@@ -215,7 +254,7 @@ export default function Home({ IS_CLOUD }: Props) {
 						)}
 					/>
 					<Button className="w-full" type="submit" isLoading={isLoginLoading}>
-						Login
+						{t("login.loginButton")}
 					</Button>
 				</form>
 			</Form>
@@ -235,11 +274,11 @@ export default function Home({ IS_CLOUD }: Props) {
 								undefined
 							}
 						/>
-						Sign in
+						{t("login.signInTitle")}
 					</div>
 				</h1>
 				<p className="text-sm text-muted-foreground">
-					Enter your email and password to sign in
+					{t("login.signInSubtitle")}
 				</p>
 			</div>
 			{error && (
@@ -265,7 +304,7 @@ export default function Home({ IS_CLOUD }: Props) {
 							autoComplete="on"
 						>
 							<div className="flex flex-col gap-2">
-								<Label htmlFor="totp-code">2FA Code</Label>
+								<Label htmlFor="totp-code">{t("login.twoFactorCodeLabel")}</Label>
 								<InputOTP
 									id="totp-code"
 									name="totp"
@@ -277,14 +316,14 @@ export default function Home({ IS_CLOUD }: Props) {
 									autoFocus
 								/>
 								<CardDescription>
-									Enter the 6-digit code from your authenticator app
+									{t("login.enter2faSubtitle")}
 								</CardDescription>
 								<button
 									type="button"
 									onClick={() => setIsBackupCodeModalOpen(true)}
 									className="text-sm text-muted-foreground hover:underline self-start mt-2"
 								>
-									Lost access to your authenticator app?
+									{t("login.lostAuthenticator")}
 								</button>
 							</div>
 
@@ -298,14 +337,14 @@ export default function Home({ IS_CLOUD }: Props) {
 										setTwoFactorCode("");
 									}}
 								>
-									Back
+									{t("common.cancel")}
 								</Button>
 								<Button
 									className="w-full"
 									type="submit"
 									isLoading={isTwoFactorLoading}
 								>
-									Verify
+									{t("login.verifyButton")}
 								</Button>
 							</div>
 						</form>
@@ -316,24 +355,23 @@ export default function Home({ IS_CLOUD }: Props) {
 						>
 							<DialogContent>
 								<DialogHeader>
-									<DialogTitle>Enter Backup Code</DialogTitle>
+									<DialogTitle>{t("login.enterBackupCodeTitle")}</DialogTitle>
 									<DialogDescription>
-										Enter one of your backup codes to access your account
+										{t("login.enterBackupCodeSubtitle")}
 									</DialogDescription>
 								</DialogHeader>
 
 								<form onSubmit={onBackupCodeSubmit} className="space-y-4">
 									<div className="flex flex-col gap-2">
-										<Label>Backup Code</Label>
+										<Label>{t("login.backupCodeLabel")}</Label>
 										<Input
 											value={backupCode}
 											onChange={(e) => setBackupCode(e.target.value)}
-											placeholder="Enter your backup code"
+											placeholder={t("login.backupCodePlaceholder")}
 											className="font-mono"
 										/>
 										<CardDescription>
-											Enter one of the backup codes you received when setting up
-											2FA
+											{t("login.backupCodeHelp")}
 										</CardDescription>
 									</div>
 
@@ -347,14 +385,14 @@ export default function Home({ IS_CLOUD }: Props) {
 												setBackupCode("");
 											}}
 										>
-											Cancel
+											{t("common.cancel")}
 										</Button>
 										<Button
 											className="w-full"
 											type="submit"
 											isLoading={isBackupCodeLoading}
 										>
-											Verify
+											{t("login.verifyButton")}
 										</Button>
 									</div>
 								</form>
@@ -370,7 +408,7 @@ export default function Home({ IS_CLOUD }: Props) {
 								className="hover:underline text-muted-foreground"
 								href="/register"
 							>
-								Create an account
+								{t("login.createAccount")}
 							</Link>
 						)}
 					</div>
@@ -381,7 +419,7 @@ export default function Home({ IS_CLOUD }: Props) {
 								className="hover:underline text-muted-foreground"
 								href="/send-reset-password"
 							>
-								Lost your password?
+								{t("login.lostPassword")}
 							</Link>
 						) : (
 							<Link
@@ -389,7 +427,7 @@ export default function Home({ IS_CLOUD }: Props) {
 								href="https://docs.dokploy.com/docs/core/reset-password"
 								target="_blank"
 							>
-								Lost your password?
+								{t("login.lostPassword")}
 							</Link>
 						)}
 					</div>
