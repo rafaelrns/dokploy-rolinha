@@ -4,7 +4,7 @@ import { standardSchemaResolver as zodResolver } from "@hookform/resolvers/stand
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import type { GetServerSidePropsContext } from "next";
 import Link from "next/link";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -55,8 +55,6 @@ const redirectToDashboard = () => {
 	window.location.assign("/dashboard/home");
 };
 
-const AUTH_WATCHDOG_FORCE_REDIRECT_MS = 4000;
-
 interface Props {
 	IS_CLOUD: boolean;
 }
@@ -80,57 +78,23 @@ export default function Home({ IS_CLOUD }: Props) {
 		},
 	});
 
-	useEffect(() => {
-		if (!isLoginLoading && !isTwoFactorLoading && !isBackupCodeLoading) {
-			return;
-		}
-
-		let cancelled = false;
-		let attempts = 0;
-		const maxAttempts = 16;
-		let forceRedirectTimer: ReturnType<typeof setTimeout> | null = setTimeout(
-			() => {
-				redirectToDashboard();
-			},
-			AUTH_WATCHDOG_FORCE_REDIRECT_MS,
-		);
-
-		const checkSession = async () => {
-			if (cancelled) return;
+	const waitForSessionAndRedirect = async () => {
+		const maxAttempts = 12;
+		for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
 			try {
 				const session = await authClient.getSession();
 				if (session?.data?.session) {
-					if (forceRedirectTimer) {
-						clearTimeout(forceRedirectTimer);
-						forceRedirectTimer = null;
-					}
 					redirectToDashboard();
 					return;
 				}
 			} catch {
-				// Ignore transient session-check failures and keep polling.
+				// Ignore transient session-check failures and retry briefly.
 			}
-
-			attempts += 1;
-			if (attempts >= maxAttempts) {
-				if (!cancelled) {
-					setIsLoginLoading(false);
-					setIsTwoFactorLoading(false);
-					setIsBackupCodeLoading(false);
-				}
-				return;
-			}
-			setTimeout(checkSession, 500);
-		};
-
-		void checkSession();
-		return () => {
-			cancelled = true;
-			if (forceRedirectTimer) {
-				clearTimeout(forceRedirectTimer);
-			}
-		};
-	}, [isLoginLoading, isTwoFactorLoading, isBackupCodeLoading]);
+			await new Promise((resolve) => setTimeout(resolve, 250));
+		}
+		// Last fallback to avoid trapping the user in loading state.
+		redirectToDashboard();
+	};
 
 	const onSubmit = async (values: LoginForm) => {
 		setIsLoginLoading(true);
@@ -165,7 +129,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success(t("login.success"));
-			redirectToDashboard();
+			await waitForSessionAndRedirect();
 		} catch {
 			toast.error(t("login.errorGeneric"));
 		} finally {
@@ -192,7 +156,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success(t("login.success"));
-			redirectToDashboard();
+			await waitForSessionAndRedirect();
 		} catch {
 			toast.error(t("login.error2fa"));
 		} finally {
@@ -220,7 +184,7 @@ export default function Home({ IS_CLOUD }: Props) {
 			}
 
 			toast.success(t("login.success"));
-			redirectToDashboard();
+			await waitForSessionAndRedirect();
 		} catch {
 			toast.error(t("login.errorBackup"));
 		} finally {
