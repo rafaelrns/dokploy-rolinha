@@ -27,6 +27,7 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useI18n } from "@/lib/i18n";
 import {
 	Select,
 	SelectContent,
@@ -95,6 +96,7 @@ function getServiceInfo(d: DeploymentRow) {
 }
 
 export function ShowDeploymentsTable() {
+	const { t } = useI18n();
 	const [sorting, setSorting] = useState<SortingState>([
 		{ id: "createdAt", desc: true },
 	]);
@@ -166,7 +168,7 @@ export function ShowDeploymentsTable() {
 						className="-ml-3 h-8"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
-						Service
+						{t("deployments.table.service")}
 						<ArrowUpDown className="ml-2 size-4" />
 					</Button>
 				),
@@ -183,7 +185,9 @@ export function ShowDeploymentsTable() {
 							<div className="flex flex-col min-w-0">
 								<span className="font-medium truncate">{info.name}</span>
 								<Badge variant="outline" className="w-fit text-[10px]">
-									{info.type}
+									{info.type === "Application"
+										? t("deployments.type.application")
+										: t("deployments.type.compose")}
 								</Badge>
 							</div>
 						</div>
@@ -207,7 +211,7 @@ export function ShowDeploymentsTable() {
 						className="-ml-3 h-8"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
-						Project
+						{t("deployments.table.project")}
 						<ArrowUpDown className="ml-2 size-4" />
 					</Button>
 				),
@@ -237,7 +241,7 @@ export function ShowDeploymentsTable() {
 						className="-ml-3 h-8"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
-						Environment
+						{t("deployments.table.environment")}
 						<ArrowUpDown className="ml-2 size-4" />
 					</Button>
 				),
@@ -270,7 +274,7 @@ export function ShowDeploymentsTable() {
 						className="-ml-3 h-8"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
-						Server
+						{t("deployments.table.server")}
 						<ArrowUpDown className="ml-2 size-4" />
 					</Button>
 				),
@@ -315,7 +319,9 @@ export function ShowDeploymentsTable() {
 							)}
 							{showBuild && buildServerName && (
 								<div className="flex items-center gap-1.5 text-muted-foreground flex-wrap">
-									<span className="text-[10px]">Build:</span>
+									<span className="text-[10px]">
+										{t("deployments.table.build")}:
+									</span>
 									<span className="truncate text-xs">{buildServerName}</span>
 									{buildServerType && (
 										<Badge
@@ -371,15 +377,25 @@ export function ShowDeploymentsTable() {
 						className="-ml-3 h-8"
 						onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
 					>
-						Status
+						{t("deployments.table.status")}
 						<ArrowUpDown className="ml-2 size-4" />
 					</Button>
 				),
 				cell: ({ row }: { row: { original: DeploymentRow } }) => {
 					const status = row.original.status ?? "running";
+					const translatedStatus =
+						status === "running"
+							? t("deployments.status.running")
+							: status === "done"
+								? t("deployments.status.done")
+								: status === "error"
+									? t("deployments.status.error")
+									: status === "cancelled"
+										? t("deployments.status.cancelled")
+										: status;
 					return (
 						<Badge variant={statusVariants[status] ?? "secondary"}>
-							{status}
+							{translatedStatus}
 						</Badge>
 					);
 				},
@@ -422,7 +438,7 @@ export function ShowDeploymentsTable() {
 						<Button variant="ghost" size="sm" asChild>
 							<Link href={info.href} className="gap-1">
 								<ExternalLink className="size-4" />
-								Open
+								{t("common.open")}
 							</Link>
 						</Button>
 					);
@@ -455,31 +471,33 @@ export function ShowDeploymentsTable() {
 		<div className="space-y-2">
 			<div className="flex flex-wrap items-center gap-2">
 				<Input
-					placeholder="Search by name, project, environment, server..."
+					placeholder={t("deployments.searchPlaceholder")}
 					value={globalFilter}
 					onChange={(e) => setGlobalFilter(e.target.value)}
 					className="max-w-xs"
 				/>
 				<Select value={statusFilter} onValueChange={setStatusFilter}>
 					<SelectTrigger className="w-[140px]">
-						<SelectValue placeholder="Status" />
+						<SelectValue placeholder={t("deployments.filters.status")} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All statuses</SelectItem>
-						<SelectItem value="running">Running</SelectItem>
-						<SelectItem value="done">Done</SelectItem>
-						<SelectItem value="error">Error</SelectItem>
-						<SelectItem value="cancelled">Cancelled</SelectItem>
+						<SelectItem value="all">{t("deployments.filters.allStatuses")}</SelectItem>
+						<SelectItem value="running">{t("deployments.status.running")}</SelectItem>
+						<SelectItem value="done">{t("deployments.status.done")}</SelectItem>
+						<SelectItem value="error">{t("deployments.status.error")}</SelectItem>
+						<SelectItem value="cancelled">
+							{t("deployments.status.cancelled")}
+						</SelectItem>
 					</SelectContent>
 				</Select>
 				<Select value={typeFilter} onValueChange={setTypeFilter}>
 					<SelectTrigger className="w-[140px]">
-						<SelectValue placeholder="Type" />
+						<SelectValue placeholder={t("deployments.filters.type")} />
 					</SelectTrigger>
 					<SelectContent>
-						<SelectItem value="all">All types</SelectItem>
-						<SelectItem value="application">Application</SelectItem>
-						<SelectItem value="compose">Compose</SelectItem>
+						<SelectItem value="all">{t("deployments.filters.allTypes")}</SelectItem>
+						<SelectItem value="application">{t("deployments.type.application")}</SelectItem>
+						<SelectItem value="compose">{t("deployments.type.compose")}</SelectItem>
 					</SelectContent>
 				</Select>
 			</div>
@@ -487,7 +505,7 @@ export function ShowDeploymentsTable() {
 				{isLoading ? (
 					<div className="flex gap-4 w-full items-center justify-center min-h-[45vh] text-muted-foreground">
 						<Loader2 className="size-4 animate-spin" />
-						<span>Loading deployments...</span>
+						<span>{t("deployments.loading")}</span>
 					</div>
 				) : (
 					<>
@@ -531,10 +549,9 @@ export function ShowDeploymentsTable() {
 											>
 												<div className="flex flex-col min-h-[45vh] items-center justify-center gap-2 text-muted-foreground">
 													<Rocket className="size-8" />
-													<p className="font-medium">No deployments found</p>
+													<p className="font-medium">{t("deployments.empty.title")}</p>
 													<p className="text-sm">
-														Deployments from applications and compose will
-														appear here.
+														{t("deployments.empty.description")}
 													</p>
 												</div>
 											</TableCell>
@@ -591,7 +608,7 @@ export function ShowDeploymentsTable() {
 									disabled={!table.getCanPreviousPage()}
 								>
 									<ChevronLeft className="size-4" />
-									Previous
+									{t("common.previous")}
 								</Button>
 								<Button
 									variant="outline"
@@ -600,7 +617,7 @@ export function ShowDeploymentsTable() {
 									onClick={() => table.nextPage()}
 									disabled={!table.getCanNextPage()}
 								>
-									Next
+									{t("common.next")}
 									<ChevronRight className="size-4" />
 								</Button>
 							</div>

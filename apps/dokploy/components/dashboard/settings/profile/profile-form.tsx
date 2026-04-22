@@ -75,6 +75,8 @@ export const ProfileForm = () => {
 		isError,
 		error,
 	} = api.user.update.useMutation();
+	const { mutateAsync: setLocaleMutation, isPending: isUpdatingLocale } =
+		api.user.setLocale.useMutation();
 	const [gravatarHash, setGravatarHash] = useState<string | null>(null);
 	const colorInputRef = useRef<HTMLInputElement>(null);
 
@@ -137,8 +139,12 @@ export const ProfileForm = () => {
 				allowImpersonation: values.allowImpersonation,
 				firstName: values.firstName || undefined,
 				lastName: values.lastName || undefined,
-				locale: values.locale,
 			});
+			if (values.locale) {
+				await setLocaleMutation({
+					locale: values.locale,
+				});
+			}
 			await refetch();
 			if (values.locale) {
 				setLocale(values.locale);
@@ -153,7 +159,11 @@ export const ProfileForm = () => {
 				lastName: values.lastName || "",
 			});
 		} catch (error) {
-			toast.error(t("profile.updateError"));
+			toast.error(
+				error instanceof Error && error.message
+					? error.message
+					: t("profile.updateError"),
+			);
 		}
 	};
 
@@ -197,7 +207,7 @@ export const ProfileForm = () => {
 													<FormItem>
 														<FormLabel>{t("profile.firstName")}</FormLabel>
 														<FormControl>
-															<Input placeholder="John" {...field} />
+															<Input placeholder={t("profile.firstNamePlaceholder")} {...field} />
 														</FormControl>
 														<FormMessage />
 													</FormItem>
@@ -210,7 +220,7 @@ export const ProfileForm = () => {
 													<FormItem>
 														<FormLabel>{t("profile.lastName")}</FormLabel>
 														<FormControl>
-															<Input placeholder="Doe" {...field} />
+															<Input placeholder={t("profile.lastNamePlaceholder")} {...field} />
 														</FormControl>
 														<FormMessage />
 													</FormItem>
@@ -223,7 +233,7 @@ export const ProfileForm = () => {
 													<FormItem>
 														<FormLabel>{t("profile.email")}</FormLabel>
 														<FormControl>
-															<Input placeholder="Email" {...field} />
+															<Input placeholder={t("profile.email")} {...field} />
 														</FormControl>
 														<FormMessage />
 													</FormItem>
@@ -238,7 +248,7 @@ export const ProfileForm = () => {
 														<FormControl>
 															<Input
 																type="password"
-																placeholder="Current Password"
+																placeholder={t("profile.currentPassword")}
 																{...field}
 																value={field.value || ""}
 															/>
@@ -256,7 +266,7 @@ export const ProfileForm = () => {
 														<FormControl>
 															<Input
 																type="password"
-																placeholder="Password"
+																placeholder={t("profile.newPassword")}
 																{...field}
 																value={field.value || ""}
 															/>
@@ -349,7 +359,7 @@ export const ProfileForm = () => {
 																					// max file size 2mb
 																					if (file.size > 2 * 1024 * 1024) {
 																						toast.error(
-																							"Image size must be less than 2MB",
+																							t("profile.avatarTooLarge"),
 																						);
 																						return;
 																					}
@@ -470,7 +480,10 @@ export const ProfileForm = () => {
 										</div>
 
 										<div className="flex items-center justify-end gap-2">
-											<Button type="submit" isLoading={isUpdating}>
+											<Button
+												type="submit"
+												isLoading={isUpdating || isUpdatingLocale}
+											>
 												{t("common.save")}
 											</Button>
 										</div>

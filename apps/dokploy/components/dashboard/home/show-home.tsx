@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { useI18n } from "@/lib/i18n";
 import { api } from "@/utils/api";
 
 type DeploymentStatus = "idle" | "running" | "done" | "error";
@@ -94,6 +95,7 @@ function StatusListCard({
 }
 
 export const ShowHome = () => {
+	const { t } = useI18n();
 	const { data: auth } = api.user.get.useQuery();
 	const { data: homeStats } = api.project.homeStats.useQuery();
 	const { data: permissions } = api.user.getPermissions.useQuery();
@@ -151,11 +153,11 @@ export const ShowHome = () => {
 		let delta: string | undefined;
 		if (prevCount > 0) {
 			const pct = Math.round(((lastCount - prevCount) / prevCount) * 100);
-			delta = `${pct >= 0 ? "+" : ""}${pct}% vs prev 7d`;
+			delta = t("home.deltaVsPrev7d", { pct: `${pct >= 0 ? "+" : ""}${pct}` });
 		} else if (lastCount > 0) {
-			delta = "no prior data";
+			delta = t("home.noPriorData");
 		} else {
-			delta = "no activity yet";
+			delta = t("home.noActivityYet");
 		}
 
 		return { value: String(lastCount), delta };
@@ -167,11 +169,13 @@ export const ShowHome = () => {
 				<div className="rounded-xl bg-background shadow-md p-6 flex flex-col gap-6 h-full">
 					<div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
 						<h1 className="text-3xl font-semibold tracking-tight">
-							{firstName ? `Welcome back, ${firstName}` : "Welcome back"}
+							{firstName
+								? t("home.welcomeBackNamed", { name: firstName })
+								: t("home.welcomeBack")}
 						</h1>
 						<Button asChild variant="secondary" className="w-fit">
 							<Link href="/dashboard/projects">
-								Go to projects
+								{t("home.goToProjects")}
 								<ArrowRight className="size-4" />
 							</Link>
 						</Button>
@@ -179,36 +183,42 @@ export const ShowHome = () => {
 
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 						<StatCard
-							label="Projects"
+							label={t("home.projects")}
 							value={String(totals.projects)}
-							delta={`${totals.environments} ${totals.environments === 1 ? "environment" : "environments"}`}
+							delta={`${totals.environments} ${
+								totals.environments === 1
+									? t("home.environment")
+									: t("home.environments")
+							}`}
 						/>
 						<StatCard
-							label="Services"
+							label={t("home.services")}
 							value={String(totals.services)}
-							delta={`${totals.applications} apps · ${totals.compose} compose · ${totals.databases} db`}
+							delta={`${totals.applications} ${t("home.apps")} · ${totals.compose} ${t(
+								"home.compose",
+							)} · ${totals.databases} ${t("home.db")}`}
 						/>
 						<StatCard
-							label="Deploys / 7d"
+							label={t("home.deploys7d")}
 							value={deployStats.value}
 							delta={deployStats.delta}
 						/>
 						<StatusListCard
-							label="Status"
+							label={t("home.status")}
 							items={[
 								{
 									dotClass: "bg-emerald-500",
-									label: "running",
+									label: t("home.running"),
 									count: statusBreakdown.running,
 								},
 								{
 									dotClass: "bg-red-500",
-									label: "errored",
+									label: t("home.errored"),
 									count: statusBreakdown.error,
 								},
 								{
 									dotClass: "bg-muted-foreground/40",
-									label: "idle",
+									label: t("home.idle"),
 									count: statusBreakdown.idle,
 								},
 							]}
@@ -219,26 +229,28 @@ export const ShowHome = () => {
 						<div className="flex items-center justify-between px-5 py-4 border-b">
 							<div className="flex items-center gap-2">
 								<Rocket className="size-4 text-muted-foreground" />
-								<h2 className="text-sm font-semibold">Recent deployments</h2>
+								<h2 className="text-sm font-semibold">
+									{t("home.recentDeployments")}
+								</h2>
 							</div>
 							{canReadDeployments && (
 								<Link
 									href="/dashboard/deployments"
 									className="text-xs text-muted-foreground hover:text-foreground transition-colors"
 								>
-									view all →
+									{t("home.viewAll")} →
 								</Link>
 							)}
 						</div>
 						{!canReadDeployments ? (
 							<div className="min-h-[400px] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground p-10">
 								<Rocket className="size-8 opacity-40" />
-								<span>You do not have permission to view deployments.</span>
+								<span>{t("home.noPermissionDeployments")}</span>
 							</div>
 						) : recentDeployments.length === 0 ? (
 							<div className="min-h-[400px] flex flex-col items-center justify-center gap-3 text-center text-sm text-muted-foreground p-10">
 								<Rocket className="size-8 opacity-40" />
-								<span>No deployments yet.</span>
+								<span>{t("home.noDeploymentsYet")}</span>
 							</div>
 						) : (
 							<ul className="divide-y">
