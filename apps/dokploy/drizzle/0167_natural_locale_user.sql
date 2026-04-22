@@ -1,1 +1,1 @@
-ALTER TABLE "user" ADD COLUMN "locale" text DEFAULT 'pt-BR';
+ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "locale" text DEFAULT 'pt-BR';
