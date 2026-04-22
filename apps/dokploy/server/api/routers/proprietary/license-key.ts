@@ -1,6 +1,13 @@
 import { db } from "@dokploy/server/db";
 import { user } from "@dokploy/server/db/schema";
-import { hasValidLicense, validateLicenseKey } from "@dokploy/server/index";
+import {
+	activateLicenseKey,
+	deactivateLicenseKey,
+	generateLocalLicenseKey,
+	getNextGraceUntil,
+	hasValidLicense,
+	validateLicenseKeyDetailed,
+} from "@dokploy/server/index";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
@@ -9,10 +16,9 @@ import {
 	createTRPCRouter,
 	protectedProcedure,
 } from "@/server/api/trpc";
-import {
-	activateLicenseKey,
-	deactivateLicenseKey,
-} from "@/server/utils/enterprise";
+
+const usingLocalLicenseProvider =
+	(process.env.ENTERPRISE_LICENSE_PROVIDER || "local") === "local";
 
 export const licenseKeyRouter = createTRPCRouter({
 	activate: adminProcedure
@@ -45,12 +51,22 @@ export const licenseKeyRouter = createTRPCRouter({
 					});
 				}
 
-				await activateLicenseKey(input.licenseKey);
+				const activation = await activateLicenseKey(input.licenseKey, {
+					graceUntil: currentUser.enterpriseLicenseGraceUntil,
+					lastKnownValid: currentUser.isValidEnterpriseLicense,
+				});
 				await db
 					.update(user)
 					.set({
 						licenseKey: input.licenseKey,
 						isValidEnterpriseLicense: true,
+						enterpriseLicensePlan: activation.plan,
+						enterpriseLicenseFeatures: activation.features,
+						enterpriseLicenseExpiresAt: activation.expiresAt,
+						enterpriseLicenseLastValidatedAt: new Date(),
+						enterpriseLicenseValidationSource: activation.source,
+						enterpriseLicenseValidationError: null,
+						enterpriseLicenseGraceUntil: getNextGraceUntil(),
 					})
 					.where(eq(user.id, currentUserId));
 				return { success: true };
@@ -99,14 +115,28 @@ export const licenseKeyRouter = createTRPCRouter({
 						"Please activate enterprise features to validate license key",
 				});
 			}
-			const valid = await validateLicenseKey(currentUser.licenseKey);
-			if (valid) {
-				await db
-					.update(user)
-					.set({ isValidEnterpriseLicense: true })
-					.where(eq(user.id, currentUserId));
-			}
-			return valid;
+			const validation = await validateLicenseKeyDetailed(currentUser.licenseKey, {
+				graceUntil: currentUser.enterpriseLicenseGraceUntil,
+				lastKnownValid: currentUser.isValidEnterpriseLicense,
+			});
+
+			await db
+				.update(user)
+				.set({
+					isValidEnterpriseLicense: validation.valid,
+					enterpriseLicensePlan: validation.plan,
+					enterpriseLicenseFeatures: validation.features,
+					enterpriseLicenseExpiresAt: validation.expiresAt,
+					enterpriseLicenseLastValidatedAt: new Date(),
+					enterpriseLicenseValidationSource: validation.source,
+					enterpriseLicenseValidationError: validation.error || null,
+					enterpriseLicenseGraceUntil:
+						validation.valid && !validation.graceActive
+							? getNextGraceUntil()
+							: validation.graceUntil,
+				})
+				.where(eq(user.id, currentUserId));
+			return validation.valid;
 		} catch (error) {
 			throw new TRPCError({
 				code: "INTERNAL_SERVER_ERROR",
@@ -154,6 +184,13 @@ export const licenseKeyRouter = createTRPCRouter({
 				.set({
 					licenseKey: null,
 					isValidEnterpriseLicense: false,
+					enterpriseLicensePlan: "free",
+					enterpriseLicenseFeatures: [],
+					enterpriseLicenseExpiresAt: null,
+					enterpriseLicenseLastValidatedAt: new Date(),
+					enterpriseLicenseValidationSource: null,
+					enterpriseLicenseValidationError: null,
+					enterpriseLicenseGraceUntil: null,
 				})
 				.where(eq(user.id, currentUserId));
 			return { success: true };
@@ -190,8 +227,61 @@ export const licenseKeyRouter = createTRPCRouter({
 		return {
 			enableEnterpriseFeatures: !!currentUser.enableEnterpriseFeatures,
 			licenseKey: currentUser.licenseKey ?? "",
+			isValidEnterpriseLicense: !!currentUser.isValidEnterpriseLicense,
+			enterpriseLicensePlan: currentUser.enterpriseLicensePlan || "free",
+			enterpriseLicenseFeatures: currentUser.enterpriseLicenseFeatures || [],
+			enterpriseLicenseExpiresAt: currentUser.enterpriseLicenseExpiresAt,
+			enterpriseLicenseValidationSource:
+				currentUser.enterpriseLicenseValidationSource || "unknown",
+			enterpriseLicenseValidationError:
+				currentUser.enterpriseLicenseValidationError || null,
+			enterpriseLicenseGraceUntil: currentUser.enterpriseLicenseGraceUntil,
 		};
 	}),
+	generateLocal: adminProcedure
+		.input(
+			z.object({
+				plan: z
+					.enum(["free", "pro", "enterprise-fork"])
+					.default("enterprise-fork"),
+				expiresInDays: z.number().int().positive().max(3650).default(365),
+				features: z.array(z.string().min(1)).optional(),
+			}),
+		)
+		.mutation(async ({ ctx, input }) => {
+			if (ctx.user.role !== "owner") {
+				throw new TRPCError({
+					code: "FORBIDDEN",
+					message: "Only owners can generate local license keys",
+				});
+			}
+
+			if (!usingLocalLicenseProvider) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message:
+						"Local license generation is available only when ENTERPRISE_LICENSE_PROVIDER=local",
+				});
+			}
+
+			try {
+				const key = generateLocalLicenseKey({
+					plan: input.plan,
+					expiresInDays: input.expiresInDays,
+					features: input.features,
+					sub: ctx.user.id,
+				});
+				return { key };
+			} catch (error) {
+				throw new TRPCError({
+					code: "INTERNAL_SERVER_ERROR",
+					message:
+						error instanceof Error
+							? error.message
+							: "Failed to generate local license key",
+				});
+			}
+		}),
 	haveValidLicenseKey: protectedProcedure.query(async ({ ctx }) => {
 		return await hasValidLicense(ctx.session.activeOrganizationId);
 	}),

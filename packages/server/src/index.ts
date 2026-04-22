@@ -36,6 +36,7 @@ export * from "./services/postgres";
 export * from "./services/preview-deployment";
 export * from "./services/project";
 export * from "./services/proprietary/license-key";
+export * from "./services/proprietary/license-provider";
 export * from "./services/proprietary/sso";
 export * from "./services/redirect";
 export * from "./services/redis";

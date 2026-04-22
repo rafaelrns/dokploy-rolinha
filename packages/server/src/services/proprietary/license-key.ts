@@ -15,10 +15,16 @@ export const hasValidLicense = async (organizationId: string) => {
 		columns: {
 			enableEnterpriseFeatures: true,
 			isValidEnterpriseLicense: true,
+			enterpriseLicenseExpiresAt: true,
 		},
 	});
+
+	const isExpired =
+		!!currentUser?.enterpriseLicenseExpiresAt &&
+		currentUser.enterpriseLicenseExpiresAt.getTime() <= Date.now();
 	return !!(
 		currentUser?.enableEnterpriseFeatures &&
-		currentUser?.isValidEnterpriseLicense
+		currentUser?.isValidEnterpriseLicense &&
+		!isExpired
 	);
 };

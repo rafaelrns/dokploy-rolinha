@@ -7,6 +7,7 @@
 - Setup hardening reduced direct `curl | bash` patterns in automated server provisioning.
 - Traefik `api.insecure` now defaults to disabled; explicit opt-in required via `DOKPLOY_ENABLE_INSECURE_TRAEFIK_API=true`.
 - Added production hardening and offline enterprise operation guides.
+- Added local fork license provider with HMAC-signed keys, metadata auditing, and remote-validation grace period fallback.
 
 ### Supply Chain
 

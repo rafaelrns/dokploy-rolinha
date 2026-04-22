@@ -20,9 +20,16 @@ export function LicenseKeySettings() {
 		api.licenseKey.validate.useMutation();
 	const { mutateAsync: deactivateLicenseKey, isPending: isDeactivating } =
 		api.licenseKey.deactivate.useMutation();
+	const { mutateAsync: generateLocalLicenseKey, isPending: isGeneratingLocalKey } =
+		api.licenseKey.generateLocal.useMutation();
 	const { data: haveValidLicenseKey, isPending: isCheckingLicenseKey } =
 		api.licenseKey.haveValidLicenseKey.useQuery();
 	const [licenseKey, setLicenseKey] = useState("");
+	const [localPlan, setLocalPlan] = useState<
+		"free" | "pro" | "enterprise-fork"
+	>("enterprise-fork");
+	const [localExpiresInDays, setLocalExpiresInDays] = useState("365");
+	const [localFeatures, setLocalFeatures] = useState("");
 
 	useEffect(() => {
 		if (data?.licenseKey) {
@@ -31,6 +38,10 @@ export function LicenseKeySettings() {
 	}, [data?.licenseKey]);
 
 	const enabled = !!data?.enableEnterpriseFeatures;
+	const isUsingLocalProvider =
+		data?.enterpriseLicenseValidationSource === "local" ||
+		(data?.enterpriseLicenseValidationSource === "unknown" &&
+			!data?.licenseKey?.trim());
 
 	return (
 		<div className="flex flex-col gap-4 rounded-lg border p-4">
@@ -88,9 +99,145 @@ export function LicenseKeySettings() {
 							</Link>
 							.
 						</p>
+						<div className="rounded-md border border-dashed bg-muted/30 p-3 text-xs text-muted-foreground">
+							<div>
+								License provider source:{" "}
+								<span className="font-medium">
+									{data?.enterpriseLicenseValidationSource || "unknown"}
+								</span>
+							</div>
+							{data?.enterpriseLicensePlan && (
+								<div>
+									Current plan:{" "}
+									<span className="font-medium">{data.enterpriseLicensePlan}</span>
+								</div>
+							)}
+							{data?.enterpriseLicenseExpiresAt && (
+								<div>
+									Expires at:{" "}
+									<span className="font-medium">
+										{new Date(data.enterpriseLicenseExpiresAt).toLocaleString()}
+									</span>
+								</div>
+							)}
+							{data?.enterpriseLicenseGraceUntil && (
+								<div>
+									Grace until:{" "}
+									<span className="font-medium">
+										{new Date(data.enterpriseLicenseGraceUntil).toLocaleString()}
+									</span>
+								</div>
+							)}
+							{data?.enterpriseLicenseValidationError && (
+								<div className="text-amber-600 dark:text-amber-400">
+									Last validation error: {data.enterpriseLicenseValidationError}
+								</div>
+							)}
+						</div>
 					</div>
 					{enabled ? (
 						<>
+							{isUsingLocalProvider && (
+								<div className="rounded-lg border bg-muted/20 p-3">
+									<div className="mb-3 text-sm font-medium">
+										Generate local fork license key
+									</div>
+									<div className="grid gap-3 md:grid-cols-3">
+										<div className="space-y-2">
+											<label className="text-xs font-medium" htmlFor="localPlan">
+												Plan
+											</label>
+											<select
+												id="localPlan"
+												className="h-9 w-full rounded-md border bg-background px-3 text-sm"
+												value={localPlan}
+												onChange={(e) =>
+													setLocalPlan(
+														e.target.value as
+															| "free"
+															| "pro"
+															| "enterprise-fork",
+													)
+												}
+											>
+												<option value="free">free</option>
+												<option value="pro">pro</option>
+												<option value="enterprise-fork">enterprise-fork</option>
+											</select>
+										</div>
+										<div className="space-y-2">
+											<label
+												className="text-xs font-medium"
+												htmlFor="localExpiresInDays"
+											>
+												Expires in days
+											</label>
+											<Input
+												id="localExpiresInDays"
+												type="number"
+												min={1}
+												max={3650}
+												value={localExpiresInDays}
+												onChange={(e) => setLocalExpiresInDays(e.target.value)}
+											/>
+										</div>
+										<div className="space-y-2">
+											<label className="text-xs font-medium" htmlFor="localFeatures">
+												Features (comma separated, optional)
+											</label>
+											<Input
+												id="localFeatures"
+												placeholder="sso,audit-log,white-labeling"
+												value={localFeatures}
+												onChange={(e) => setLocalFeatures(e.target.value)}
+											/>
+										</div>
+									</div>
+									<div className="mt-3 flex flex-wrap gap-2">
+										<Button
+											variant="outline"
+											isLoading={isGeneratingLocalKey}
+											disabled={isGeneratingLocalKey || isActivating}
+											onClick={async () => {
+												try {
+													const expiresInDays = Number.parseInt(
+														localExpiresInDays || "365",
+														10,
+													);
+													const parsedFeatures = localFeatures
+														.split(",")
+														.map((f) => f.trim())
+														.filter(Boolean);
+
+													const response = await generateLocalLicenseKey({
+														plan: localPlan,
+														expiresInDays: Number.isFinite(expiresInDays)
+															? expiresInDays
+															: 365,
+														features: parsedFeatures.length
+															? parsedFeatures
+															: undefined,
+													});
+													setLicenseKey(response.key);
+													await navigator.clipboard.writeText(response.key);
+													toast.success(
+														"Local key generated and copied to clipboard",
+													);
+												} catch (error) {
+													console.error(error);
+													toast.error(
+														error instanceof Error
+															? error.message
+															: "Failed to generate local key",
+													);
+												}
+											}}
+										>
+											Generate local key
+										</Button>
+									</div>
+								</div>
+							)}
 							<div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-end">
 								<div className="space-y-2">
 									<label className="text-sm font-medium" htmlFor="licenseKey">

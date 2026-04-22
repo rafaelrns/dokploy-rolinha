@@ -62,6 +62,18 @@ export const user = pgTable("user", {
 	isValidEnterpriseLicense: boolean("isValidEnterpriseLicense")
 		.notNull()
 		.default(false),
+	enterpriseLicensePlan: text("enterpriseLicensePlan")
+		.notNull()
+		.default("free"),
+	enterpriseLicenseFeatures: text("enterpriseLicenseFeatures")
+		.array()
+		.notNull()
+		.default(sql`ARRAY[]::text[]`),
+	enterpriseLicenseExpiresAt: timestamp("enterpriseLicenseExpiresAt"),
+	enterpriseLicenseLastValidatedAt: timestamp("enterpriseLicenseLastValidatedAt"),
+	enterpriseLicenseValidationSource: text("enterpriseLicenseValidationSource"),
+	enterpriseLicenseValidationError: text("enterpriseLicenseValidationError"),
+	enterpriseLicenseGraceUntil: timestamp("enterpriseLicenseGraceUntil"),
 	stripeCustomerId: text("stripeCustomerId"),
 	stripeSubscriptionId: text("stripeSubscriptionId"),
 	serversQuantity: integer("serversQuantity").notNull().default(0),
@@ -97,6 +109,13 @@ const createSchema = createInsertSchema(user, {
 	bookmarkedTemplates: true,
 	isValidEnterpriseLicense: true,
 	isEnterpriseCloud: true,
+	enterpriseLicensePlan: true,
+	enterpriseLicenseFeatures: true,
+	enterpriseLicenseExpiresAt: true,
+	enterpriseLicenseLastValidatedAt: true,
+	enterpriseLicenseValidationSource: true,
+	enterpriseLicenseValidationError: true,
+	enterpriseLicenseGraceUntil: true,
 });
 
 export const apiCreateUserInvitation = createSchema.pick({}).extend({

@@ -47,6 +47,7 @@ bash /tmp/dokploy-install.sh
 
 For hardened production guidance (TLS, firewall, backup/restore), see [`SELF_HOSTED_HARDENING.md`](SELF_HOSTED_HARDENING.md).  
 For enterprise license behavior in offline/degraded mode, see [`ENTERPRISE_OFFLINE_MODE.md`](ENTERPRISE_OFFLINE_MODE.md).  
+For local fork license setup and production operations, see [`LOCAL_LICENSE_PRODUCTION_PLAYBOOK.md`](LOCAL_LICENSE_PRODUCTION_PLAYBOOK.md).  
 For gradual rollout, rollback, and validation checklist, see [`OPERATIONAL_RUNBOOK.md`](OPERATIONAL_RUNBOOK.md).
 For dependency residual-risk tracking and remediation priorities, see [`DEPENDENCY_RESIDUAL_RISK.md`](DEPENDENCY_RESIDUAL_RISK.md).
 Release-by-release risk entries are tracked in [`RISK_CHANGELOG.md`](RISK_CHANGELOG.md).

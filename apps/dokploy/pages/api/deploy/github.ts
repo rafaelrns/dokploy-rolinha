@@ -22,7 +22,9 @@ import { extractCommitMessage, extractHash } from "./[refreshToken]";
 
 export const config = {
 	api: {
-		sizeLimit: "2mb",
+		bodyParser: {
+			sizeLimit: "2mb",
+		},
 	},
 };
 

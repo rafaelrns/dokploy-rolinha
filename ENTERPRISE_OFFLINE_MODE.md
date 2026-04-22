@@ -4,14 +4,23 @@ Dokploy periodically validates enterprise licenses against the licensing endpoin
 
 ## Current Behavior
 
-- License validation requests are sent to `https://licenses-api.dokploy.com`.
-- If validation fails, enterprise validity may be marked as false.
+- Default in this fork is local provider (`ENTERPRISE_LICENSE_PROVIDER=local`).
+- Local keys are verified offline with `FORK_LICENSE_SECRET` (HMAC signature).
+- Remote provider remains optional (`ENTERPRISE_LICENSE_PROVIDER=remote`) and uses `https://licenses-api.dokploy.com`.
 
 ## Recommended Operational Policy
 
 - Treat network outages as a temporary degraded state, not an immediate outage trigger.
 - Keep documented grace-period expectations with your operations team.
 - Monitor connectivity to licensing endpoint and alert before grace period expires.
+- For remote provider, grace-period behavior is controlled by `ENTERPRISE_LICENSE_GRACE_PERIOD_HOURS` (default `72`).
+
+## Local Provider Setup (Fork)
+
+- Set `ENTERPRISE_LICENSE_PROVIDER=local`.
+- Set a strong `FORK_LICENSE_SECRET` in environment (required).
+- Optionally set `LOCAL_LICENSE_ISSUER` for token issuer metadata.
+- Generate keys using the proprietary license router mutation `licenseKey.generateLocal`.
 
 ## Offline-Ready Deployment Practices
 
